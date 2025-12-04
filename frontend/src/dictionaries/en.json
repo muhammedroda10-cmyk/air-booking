@@ -1,0 +1,86 @@
+{
+    "common": {
+        "search": "Search",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "success": "Success",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "create": "Create",
+        "actions": "Actions",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit"
+    },
+    "nav": {
+        "flights": "Flights",
+        "hotels": "Hotels",
+        "deals": "Deals",
+        "support": "Support",
+        "signin": "Sign In",
+        "signout": "Sign Out",
+        "dashboard": "Dashboard",
+        "admin": "Admin Panel"
+    },
+    "search": {
+        "round_trip": "Round Trip",
+        "one_way": "One Way",
+        "multi_city": "Multi-City",
+        "from": "From",
+        "to": "To",
+        "departure": "Departure",
+        "return": "Return",
+        "passengers": "Passengers",
+        "class": "Class",
+        "economy": "Economy",
+        "business": "Business",
+        "first": "First",
+        "search_flights": "Search Flights"
+    },
+    "flights": {
+        "select": "Select Flight",
+        "details": "Flight Details",
+        "stops": "Stops",
+        "duration": "Duration",
+        "price": "Price",
+        "airline": "Airline",
+        "no_flights": "No flights found"
+    },
+    "footer": {
+        "tagline": "Experience the world with premium comfort and style. Your journey begins here.",
+        "company": "Company",
+        "about": "About Us",
+        "careers": "Careers",
+        "blog": "Blog",
+        "support": "Support",
+        "help": "Help Center",
+        "contact": "Contact Us",
+        "privacy": "Privacy Policy",
+        "newsletter": "Newsletter",
+        "newsletter_desc": "Subscribe for exclusive deals and updates.",
+        "email_placeholder": "Enter your email",
+        "join": "Join",
+        "rights": "All rights reserved."
+    },
+    "booking": {
+        "title": "Complete Your Booking",
+        "flight_ref": "Flight #",
+        "steps": {
+            "passengers": "Passengers",
+            "seats": "Seats",
+            "payment": "Payment",
+            "confirmation": "Confirmation"
+        },
+        "confirmed": "Booking Confirmed!",
+        "confirmed_desc": "Your e-ticket has been sent to your email.",
+        "download_ticket": "Download E-Ticket",
+        "pay_now": "Pay Now",
+        "price_summary": "Price Summary",
+        "base_fare": "Base Fare",
+        "taxes": "Taxes & Fees",
+        "seat_selection": "Seat Selection",
+        "total": "Total"
+    }
+}

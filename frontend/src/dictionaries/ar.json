@@ -1,0 +1,86 @@
+{
+    "common": {
+        "search": "بحث",
+        "loading": "جاري التحميل...",
+        "error": "حدث خطأ",
+        "success": "تم بنجاح",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "create": "إنشاء",
+        "actions": "إجراءات",
+        "back": "رجوع",
+        "next": "التالي",
+        "submit": "إرسال"
+    },
+    "nav": {
+        "flights": "رحلات طيران",
+        "hotels": "فنادق",
+        "deals": "عروض",
+        "support": "دعم",
+        "signin": "تسجيل الدخول",
+        "signout": "تسجيل الخروج",
+        "dashboard": "لوحة التحكم",
+        "admin": "لوحة الإدارة"
+    },
+    "search": {
+        "round_trip": "ذهاب وعودة",
+        "one_way": "ذهاب فقط",
+        "multi_city": "وجهات متعددة",
+        "from": "من",
+        "to": "إلى",
+        "departure": "المغادرة",
+        "return": "العودة",
+        "passengers": "الركاب",
+        "class": "الدرجة",
+        "economy": "اقتصادية",
+        "business": "رجال أعمال",
+        "first": "أولى",
+        "search_flights": "بحث عن رحلات"
+    },
+    "flights": {
+        "select": "اختر الرحلة",
+        "details": "تفاصيل الرحلة",
+        "stops": "توقفات",
+        "duration": "المدة",
+        "price": "السعر",
+        "airline": "شركة الطيران",
+        "no_flights": "لم يتم العثور على رحلات"
+    },
+    "footer": {
+        "tagline": "اكتشف العالم براحة وأناقة مميزة. رحلتك تبدأ من هنا.",
+        "company": "الشركة",
+        "about": "من نحن",
+        "careers": "وظائف",
+        "blog": "المدونة",
+        "support": "الدعم",
+        "help": "مركز المساعدة",
+        "contact": "اتصل بنا",
+        "privacy": "سياسة الخصوصية",
+        "newsletter": "النشرة البريدية",
+        "newsletter_desc": "اشترك للحصول على عروض حصرية وتحديثات.",
+        "email_placeholder": "أدخل بريدك الإلكتروني",
+        "join": "اشترك",
+        "rights": "جميع الحقوق محفوظة."
+    },
+    "booking": {
+        "title": "أكمل حجزك",
+        "flight_ref": "رحلة رقم",
+        "steps": {
+            "passengers": "الركاب",
+            "seats": "المقاعد",
+            "payment": "الدفع",
+            "confirmation": "التأكيد"
+        },
+        "confirmed": "تم تأكيد الحجز!",
+        "confirmed_desc": "تم إرسال التذكرة الإلكترونية إلى بريدك الإلكتروني.",
+        "download_ticket": "تحميل التذكرة",
+        "pay_now": "ادفع الآن",
+        "price_summary": "ملخص السعر",
+        "base_fare": "سعر الأساس",
+        "taxes": "الضرائب والرسوم",
+        "seat_selection": "اختيار المقعد",
+        "total": "الإجمالي"
+    }
+}

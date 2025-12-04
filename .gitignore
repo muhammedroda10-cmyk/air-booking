@@ -1,0 +1,45 @@
+# Dependencies
+**/node_modules/
+**/vendor/
+
+# Build outputs
+**/.next/
+**/out/
+**/build/
+**/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+*.cache
+
+# PHP specific
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+/storage/*.key
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
