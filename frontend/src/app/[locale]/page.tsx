@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Star, Shield, Clock, CreditCard, Umbrella, Mountain, Landmark, Gem, Wallet, Utensils, ArrowRight, User } from "lucide-react"
+import { useLanguage } from "@/context/language-context"
 
 export default function Home() {
+  const { t, dir } = useLanguage()
+
   return (
     <PublicLayout>
       {/* Hero Section */}
@@ -31,13 +34,13 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium bg-white/20 text-white border-white/20 backdrop-blur-md">
-                ✨ Next-Gen Travel Platform • 2025
+                ✨ {t.hero.badge} • 2025
               </Badge>
               <h1 className="text-6xl md:text-8xl font-bold mb-6 tracking-tight text-white drop-shadow-lg">
-                Discover Your <br /> Next Adventure
+                {t.hero.title} <br /> {t.hero.title2}
               </h1>
               <p className="text-xl text-slate-100 max-w-2xl mx-auto mb-12 font-medium drop-shadow-md">
-                Book flights, hotels, and experiences with ease.
+                {t.hero.subtitle}
               </p>
             </motion.div>
           </div>
@@ -64,23 +67,23 @@ export default function Home() {
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mb-4">
                   <MapPin className="w-6 h-6 text-primary" />
                 </div>
-                <h2 className="text-3xl font-bold mb-2 text-slate-900 dark:text-white">Plan Your Trip</h2>
-                <p className="text-slate-500">Customize your perfect journey</p>
+                <h2 className="text-3xl font-bold mb-2 text-slate-900 dark:text-white">{t.home.plan_trip}</h2>
+                <p className="text-slate-500">{t.home.plan_trip_desc}</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-                <StyleCard icon={<Umbrella className="w-6 h-6 text-blue-500" />} label="Beach" />
-                <StyleCard icon={<Mountain className="w-6 h-6 text-emerald-500" />} label="Adventure" />
-                <StyleCard icon={<Landmark className="w-6 h-6 text-amber-500" />} label="Culture" />
-                <StyleCard icon={<Gem className="w-6 h-6 text-purple-500" />} label="Luxury" />
-                <StyleCard icon={<Wallet className="w-6 h-6 text-green-500" />} label="Budget" />
-                <StyleCard icon={<Utensils className="w-6 h-6 text-orange-500" />} label="Food" />
+                <StyleCard icon={<Umbrella className="w-6 h-6 text-blue-500" />} label={t.travel_styles.beach} />
+                <StyleCard icon={<Mountain className="w-6 h-6 text-emerald-500" />} label={t.travel_styles.adventure} />
+                <StyleCard icon={<Landmark className="w-6 h-6 text-amber-500" />} label={t.travel_styles.culture} />
+                <StyleCard icon={<Gem className="w-6 h-6 text-purple-500" />} label={t.travel_styles.luxury} />
+                <StyleCard icon={<Wallet className="w-6 h-6 text-green-500" />} label={t.travel_styles.budget} />
+                <StyleCard icon={<Utensils className="w-6 h-6 text-orange-500" />} label={t.travel_styles.food} />
               </div>
 
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span>Budget</span>
+                    <span>{t.home.budget}</span>
                     <span>$2000</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -89,15 +92,15 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm font-medium mb-2">
-                    <span>Trip Duration</span>
-                    <span>7 days</span>
+                    <span>{t.home.trip_duration}</span>
+                    <span>7 {t.common.days}</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full w-1/3 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full" />
                   </div>
                 </div>
                 <Button className="w-full h-12 text-lg bg-slate-900 text-white hover:bg-slate-800 mt-4">
-                  Find Perfect Destinations <ArrowRight className="ml-2 w-4 h-4" />
+                  {t.home.find_destinations} <ArrowRight className={`w-4 h-4 ${dir === 'rtl' ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </div>
             </div>
@@ -108,8 +111,8 @@ export default function Home() {
                 <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mb-4">
                   <MapPin className="w-6 h-6 text-indigo-600" />
                 </div>
-                <h2 className="text-3xl font-bold mb-2 text-slate-900 dark:text-white">Explore Destinations</h2>
-                <p className="text-slate-500">Click any location for details</p>
+                <h2 className="text-3xl font-bold mb-2 text-slate-900 dark:text-white">{t.home.explore}</h2>
+                <p className="text-slate-500">{t.home.explore_desc}</p>
               </div>
 
               <div className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-2xl relative overflow-hidden border border-slate-100 dark:border-slate-700">
@@ -119,13 +122,8 @@ export default function Home() {
                 <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-500 rounded-full shadow-lg shadow-blue-500/40"></div>
                 <div className="absolute bottom-1/3 right-1/3 w-4 h-4 bg-teal-500 rounded-full shadow-lg shadow-teal-500/40"></div>
 
-                {/* Connecting Lines (SVG) */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
-                  <path d="M200 150 Q 400 250 500 350" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="5,5" />
-                </svg>
-
                 <div className="absolute bottom-8 left-0 right-0 text-center">
-                  <p className="text-sm text-slate-400">Select a destination to view details</p>
+                  <p className="text-sm text-slate-400">{t.home.select_destination}</p>
                 </div>
               </div>
             </div>
@@ -142,36 +140,42 @@ export default function Home() {
               <Clock className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Live Deals</h2>
-              <p className="text-slate-500">Limited time offers</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{t.home.live_deals}</h2>
+              <p className="text-slate-500">{t.home.limited_offers}</p>
             </div>
-            <Badge variant="destructive" className="ml-auto animate-pulse">Live</Badge>
+            <Badge variant="destructive" className="ml-auto animate-pulse">{t.common.live}</Badge>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <DealCard
+              t={t}
+              dir={dir}
               city="Dubai"
+              cityAr="دبي"
               price="$589"
               trend="12%"
               date="Dec 15"
               seats={8}
-              image="https://images.unsplash.com/photo-1512453979798-5ea932a23644?q=80&w=2070&auto=format&fit=crop"
             />
             <DealCard
+              t={t}
+              dir={dir}
               city="Tokyo"
+              cityAr="طوكيو"
               price="$749"
               trend="5%"
               date="Dec 20"
               seats={3}
-              image="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1974&auto=format&fit=crop"
             />
             <DealCard
+              t={t}
+              dir={dir}
               city="Paris"
+              cityAr="باريس"
               price="$429"
               trend="18%"
               date="Dec 18"
               seats={12}
-              image="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop"
             />
           </div>
         </div>
@@ -180,29 +184,29 @@ export default function Home() {
       {/* Why Choose Voyager */}
       <section className="py-32 bg-slate-50 dark:bg-slate-950">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">Why Choose Voyager?</h2>
-          <p className="text-slate-500 mb-16">The future of travel booking, today</p>
+          <h2 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">{t.home.why_voyager}</h2>
+          <p className="text-slate-500 mb-16">{t.home.why_voyager_desc}</p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <FeatureCard
               icon={<Wallet className="w-8 h-8 text-yellow-500" />}
-              title="Best Prices"
-              description="Real-time price tracking and alerts"
+              title={t.home.best_prices}
+              description={t.home.best_prices_desc}
             />
             <FeatureCard
               icon={<Shield className="w-8 h-8 text-emerald-500" />}
-              title="Secure"
-              description="Bank-level encryption for your data"
+              title={t.home.secure}
+              description={t.home.secure_desc}
             />
             <FeatureCard
               icon={<MapPin className="w-8 h-8 text-red-500" />}
-              title="Personalized"
-              description="Tailored experiences just for you"
+              title={t.home.personalized}
+              description={t.home.personalized_desc}
             />
             <FeatureCard
               icon={<Clock className="w-8 h-8 text-blue-500" />}
-              title="Fast Booking"
-              description="Quick and easy reservation process"
+              title={t.home.fast_booking}
+              description={t.home.fast_booking_desc}
             />
           </div>
         </div>
@@ -223,13 +227,15 @@ function StyleCard({ icon, label }: { icon: React.ReactNode, label: string }) {
   )
 }
 
-function DealCard({ city, price, trend, date, seats, image }: { city: string, price: string, trend: string, date: string, seats: number, image: string }) {
+function DealCard({ t, dir, city, cityAr, price, trend, date, seats }: { t: any, dir: string, city: string, cityAr: string, price: string, trend: string, date: string, seats: number }) {
+  const displayCity = dir === 'rtl' ? cityAr : city
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <p className="text-sm text-slate-500 mb-1">Flight to</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{city}</h3>
+          <p className="text-sm text-slate-500 mb-1">{t.home.flight_to}</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{displayCity}</h3>
         </div>
         <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
           📉 {trend}
@@ -238,7 +244,7 @@ function DealCard({ city, price, trend, date, seats, image }: { city: string, pr
 
       <div className="mb-8">
         <p className="text-4xl font-bold text-slate-900 dark:text-white mb-1">{price}</p>
-        <p className="text-sm text-slate-500">per person</p>
+        <p className="text-sm text-slate-500">{t.common.per_person}</p>
       </div>
 
       <div className="flex justify-between text-sm text-slate-500 mb-8">
@@ -248,12 +254,12 @@ function DealCard({ city, price, trend, date, seats, image }: { city: string, pr
         </div>
         <div className="flex items-center gap-2">
           <User className="w-4 h-4" />
-          {seats} seats left
+          {seats} {t.common.seats_left}
         </div>
       </div>
 
       <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/25">
-        Lock This Price
+        {t.home.lock_price}
       </Button>
     </div>
   )
@@ -270,4 +276,3 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
     </div>
   )
 }
-

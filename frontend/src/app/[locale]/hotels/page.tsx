@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { AirplaneLoader } from "@/components/ui/loading"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { SearchWidget } from "@/components/search-widget"
 import { HotelCard } from "@/components/hotel-card"
@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import api from "@/lib/api"
 import { SlidersHorizontal } from "lucide-react"
+import { useLanguage } from "@/context/language-context"
 
 interface Hotel {
     id: number
@@ -33,6 +34,7 @@ export default function HotelsPage() {
 
 function HotelsContent() {
     const searchParams = useSearchParams()
+    const { t } = useLanguage()
     const [hotels, setHotels] = useState<Hotel[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -95,35 +97,26 @@ function HotelsContent() {
                         <div className="flex-1">
                             <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Select Hotels</h2>
-                                    <p className="text-slate-500">Showing <span className="font-bold text-primary">{hotels.length}</span> results</p>
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.hotels.title}</h2>
+                                    <p className="text-slate-500">{t.flights.showing_results} <span className="font-bold text-primary">{hotels.length}</span> {t.flights.results}</p>
                                 </div>
 
                                 <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                                    <span className="text-sm font-medium text-slate-500 pl-3">Sort by:</span>
+                                    <span className="text-sm font-medium text-slate-500 pl-3">{t.flights.sort_by}:</span>
                                     <select className="text-sm border-none bg-transparent font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8">
-                                        <option>Recommended</option>
-                                        <option>Price: Low to High</option>
-                                        <option>Price: High to Low</option>
-                                        <option>Top Rated</option>
+                                        <option>{t.hotels.recommended}</option>
+                                        <option>{t.hotels.price_low}</option>
+                                        <option>{t.hotels.price_high}</option>
+                                        <option>{t.hotels.top_rated}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="space-y-6">
                                 {loading ? (
-                                    Array.from({ length: 3 }).map((_, i) => (
-                                        <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[1.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                                            <div className="flex flex-col md:flex-row gap-8">
-                                                <Skeleton className="w-full md:w-1/3 h-48 rounded-2xl" />
-                                                <div className="flex-1 space-y-4">
-                                                    <Skeleton className="h-8 w-3/4" />
-                                                    <Skeleton className="h-4 w-1/2" />
-                                                    <Skeleton className="h-20 w-full" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
+                                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 py-8">
+                                        <AirplaneLoader text={t.loading.hotels} />
+                                    </div>
                                 ) : hotels.length > 0 ? (
                                     hotels.map((hotel) => (
                                         <HotelCard

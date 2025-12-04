@@ -10,6 +10,7 @@ import api from "@/lib/api"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
+import { LoadingSpinner } from "@/components/ui/loading"
 
 interface Booking {
     id: number;
@@ -48,6 +49,19 @@ export default function DashboardPage() {
 
     const upcomingBookings = bookings.filter(b => b.flight && new Date(b.flight.departure_time) > new Date())
     const nextTrip = upcomingBookings.sort((a, b) => new Date(a.flight.departure_time).getTime() - new Date(b.flight.departure_time).getTime())[0]
+
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-center">
+                        <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                        <p className="text-muted-foreground">Loading your dashboard...</p>
+                    </div>
+                </div>
+            </DashboardLayout>
+        )
+    }
 
     return (
         <DashboardLayout>
@@ -147,8 +161,8 @@ export default function DashboardPage() {
                             <button
                                 onClick={() => setActiveTab('upcoming')}
                                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'upcoming'
-                                        ? 'bg-white dark:bg-slate-700 shadow-sm text-primary'
-                                        : 'text-muted-foreground hover:text-foreground'
+                                    ? 'bg-white dark:bg-slate-700 shadow-sm text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 Upcoming
@@ -156,8 +170,8 @@ export default function DashboardPage() {
                             <button
                                 onClick={() => setActiveTab('past')}
                                 className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'past'
-                                        ? 'bg-white dark:bg-slate-700 shadow-sm text-primary'
-                                        : 'text-muted-foreground hover:text-foreground'
+                                    ? 'bg-white dark:bg-slate-700 shadow-sm text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 Past

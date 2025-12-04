@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { useLanguage } from "@/context/language-context"
 
 import { useState } from "react"
@@ -36,14 +36,14 @@ export function Footer() {
             <div className="container mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     <div className="space-y-6">
-                        <Link href="/" className="flex items-center gap-3">
+                        <LocaleLink href="/" className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                                 <Plane className="w-5 h-5 text-white rotate-[-45deg]" />
                             </div>
                             <span className="text-2xl font-bold tracking-widest text-white uppercase">
                                 Voyager
                             </span>
-                        </Link>
+                        </LocaleLink>
                         <p className="text-slate-400 leading-relaxed">
                             {t.footer.tagline}
                         </p>
@@ -66,20 +66,20 @@ export function Footer() {
                     <div>
                         <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">{t.footer.company}</h4>
                         <ul className="space-y-4 text-sm">
-                            <li><Link href="/about" className="text-slate-400 hover:text-primary transition-colors">{t.footer.about}</Link></li>
-                            <li><Link href="/careers" className="text-slate-400 hover:text-primary transition-colors">{t.footer.careers}</Link></li>
-                            <li><Link href="/blog" className="text-slate-400 hover:text-primary transition-colors">{t.footer.blog}</Link></li>
-                            <li><Link href="/press" className="text-slate-400 hover:text-primary transition-colors">Press</Link></li>
+                            <li><LocaleLink href="/about" className="text-slate-400 hover:text-primary transition-colors">{t.footer.about}</LocaleLink></li>
+                            <li><LocaleLink href="/careers" className="text-slate-400 hover:text-primary transition-colors">{t.footer.careers}</LocaleLink></li>
+                            <li><LocaleLink href="/blog" className="text-slate-400 hover:text-primary transition-colors">{t.footer.blog}</LocaleLink></li>
+                            <li><LocaleLink href="/press" className="text-slate-400 hover:text-primary transition-colors">Press</LocaleLink></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">{t.footer.support}</h4>
                         <ul className="space-y-4 text-sm">
-                            <li><Link href="/help" className="text-slate-400 hover:text-primary transition-colors">{t.footer.help}</Link></li>
-                            <li><Link href="/contact" className="text-slate-400 hover:text-primary transition-colors">{t.footer.contact}</Link></li>
-                            <li><Link href="/privacy" className="text-slate-400 hover:text-primary transition-colors">{t.footer.privacy}</Link></li>
-                            <li><Link href="/terms" className="text-slate-400 hover:text-primary transition-colors">Terms of Service</Link></li>
+                            <li><LocaleLink href="/help" className="text-slate-400 hover:text-primary transition-colors">{t.footer.help}</LocaleLink></li>
+                            <li><LocaleLink href="/contact" className="text-slate-400 hover:text-primary transition-colors">{t.footer.contact}</LocaleLink></li>
+                            <li><LocaleLink href="/privacy" className="text-slate-400 hover:text-primary transition-colors">{t.footer.privacy}</LocaleLink></li>
+                            <li><LocaleLink href="/terms" className="text-slate-400 hover:text-primary transition-colors">Terms of Service</LocaleLink></li>
                         </ul>
                     </div>
 
@@ -105,9 +105,9 @@ export function Footer() {
                 <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                     <p>© {new Date().getFullYear()} Voyager Inc. {t.footer.rights}</p>
                     <div className="flex gap-6">
-                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Use</Link>
-                        <Link href="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
+                        <LocaleLink href="/privacy" className="hover:text-white transition-colors">Privacy Policy</LocaleLink>
+                        <LocaleLink href="/terms" className="hover:text-white transition-colors">Terms of Use</LocaleLink>
+                        <LocaleLink href="/sitemap" className="hover:text-white transition-colors">Sitemap</LocaleLink>
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Plane, History, User, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Plane, History, User, Settings, LogOut, Building2, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -15,6 +15,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const navItems = [
         { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
         { href: "/dashboard/trips", label: "My Trips", icon: Plane },
+        { href: "/dashboard/hotel-bookings", label: "Hotel Bookings", icon: Building2 },
+        { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
         { href: "/dashboard/history", label: "History", icon: History },
         { href: "/dashboard/profile", label: "Profile", icon: User },
         { href: "/dashboard/settings", label: "Settings", icon: Settings },

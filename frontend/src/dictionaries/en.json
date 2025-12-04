@@ -12,7 +12,14 @@
         "actions": "Actions",
         "back": "Back",
         "next": "Next",
-        "submit": "Submit"
+        "submit": "Submit",
+        "view_all": "View All",
+        "learn_more": "Learn More",
+        "book_now": "Book Now",
+        "per_person": "per person",
+        "seats_left": "seats left",
+        "days": "days",
+        "live": "Live"
     },
     "nav": {
         "flights": "Flights",
@@ -22,7 +29,48 @@
         "signin": "Sign In",
         "signout": "Sign Out",
         "dashboard": "Dashboard",
-        "admin": "Admin Panel"
+        "admin": "Admin Panel",
+        "blog": "Blog",
+        "about": "About",
+        "contact": "Contact"
+    },
+    "hero": {
+        "badge": "Next-Gen Travel Platform",
+        "title": "Discover Your",
+        "title2": "Next Adventure",
+        "subtitle": "Book flights, hotels, and experiences with ease."
+    },
+    "home": {
+        "plan_trip": "Plan Your Trip",
+        "plan_trip_desc": "Customize your perfect journey",
+        "explore": "Explore Destinations",
+        "explore_desc": "Click any location for details",
+        "select_destination": "Select a destination to view details",
+        "find_destinations": "Find Perfect Destinations",
+        "budget": "Budget",
+        "trip_duration": "Trip Duration",
+        "live_deals": "Live Deals",
+        "limited_offers": "Limited time offers",
+        "flight_to": "Flight to",
+        "lock_price": "Lock This Price",
+        "why_voyager": "Why Choose Voyager?",
+        "why_voyager_desc": "The future of travel booking, today",
+        "best_prices": "Best Prices",
+        "best_prices_desc": "Real-time price tracking and alerts",
+        "secure": "Secure",
+        "secure_desc": "Bank-level encryption for your data",
+        "personalized": "Personalized",
+        "personalized_desc": "Tailored experiences just for you",
+        "fast_booking": "Fast Booking",
+        "fast_booking_desc": "Quick and easy reservation process"
+    },
+    "travel_styles": {
+        "beach": "Beach",
+        "adventure": "Adventure",
+        "culture": "Culture",
+        "luxury": "Luxury",
+        "budget": "Budget",
+        "food": "Food"
     },
     "search": {
         "round_trip": "Round Trip",
@@ -37,16 +85,47 @@
         "economy": "Economy",
         "business": "Business",
         "first": "First",
-        "search_flights": "Search Flights"
+        "search_flights": "Search Flights",
+        "search_hotels": "Search Hotels",
+        "where_from": "Where from?",
+        "where_to": "Where to?",
+        "select_date": "Select date",
+        "adults": "Adults",
+        "children": "Children"
     },
     "flights": {
+        "title": "Select Flights",
         "select": "Select Flight",
         "details": "Flight Details",
         "stops": "Stops",
         "duration": "Duration",
         "price": "Price",
         "airline": "Airline",
-        "no_flights": "No flights found"
+        "no_flights": "No flights found",
+        "showing_results": "Showing",
+        "results": "results",
+        "sort_by": "Sort by",
+        "cheapest": "Cheapest First",
+        "fastest": "Fastest First",
+        "best_value": "Best Value",
+        "search_again": "Search Again",
+        "direct_flight": "Direct Flight",
+        "searching": "Searching for the best flights..."
+    },
+    "hotels": {
+        "title": "Select Hotels",
+        "search_hotels": "Search Hotels",
+        "per_night": "per night",
+        "no_hotels": "No hotels found",
+        "city": "City",
+        "check_in": "Check-in",
+        "check_out": "Check-out",
+        "guests": "Guests",
+        "recommended": "Recommended",
+        "price_low": "Price: Low to High",
+        "price_high": "Price: High to Low",
+        "top_rated": "Top Rated",
+        "searching": "Finding the best hotels for you..."
     },
     "footer": {
         "tagline": "Experience the world with premium comfort and style. Your journey begins here.",
@@ -82,5 +161,28 @@
         "taxes": "Taxes & Fees",
         "seat_selection": "Seat Selection",
         "total": "Total"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "upcoming_trips": "Upcoming Trips",
+        "total_bookings": "Total Bookings",
+        "loyalty_points": "Loyalty Points",
+        "wallet_balance": "Wallet Balance",
+        "view_wallet": "View Wallet",
+        "next_trip": "Next Trip",
+        "no_upcoming": "No upcoming trips",
+        "no_upcoming_desc": "You haven't booked any flights yet.",
+        "book_flight": "Book a Flight",
+        "recent_bookings": "Recent Bookings",
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "total_paid": "Total Paid",
+        "loading": "Loading your dashboard..."
+    },
+    "loading": {
+        "flights": "Searching for the best flights...",
+        "hotels": "Finding the best hotels for you...",
+        "dashboard": "Loading your dashboard...",
+        "general": "Loading..."
     }
 }

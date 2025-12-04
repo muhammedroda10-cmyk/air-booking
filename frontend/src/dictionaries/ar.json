@@ -12,17 +12,65 @@
         "actions": "إجراءات",
         "back": "رجوع",
         "next": "التالي",
-        "submit": "إرسال"
+        "submit": "إرسال",
+        "view_all": "عرض الكل",
+        "learn_more": "اعرف المزيد",
+        "book_now": "احجز الآن",
+        "per_person": "للشخص",
+        "seats_left": "مقاعد متبقية",
+        "days": "أيام",
+        "live": "مباشر"
     },
     "nav": {
         "flights": "رحلات طيران",
         "hotels": "فنادق",
         "deals": "عروض",
-        "support": "دعم",
+        "support": "الدعم",
         "signin": "تسجيل الدخول",
         "signout": "تسجيل الخروج",
         "dashboard": "لوحة التحكم",
-        "admin": "لوحة الإدارة"
+        "admin": "لوحة الإدارة",
+        "blog": "المدونة",
+        "about": "من نحن",
+        "contact": "اتصل بنا"
+    },
+    "hero": {
+        "badge": "منصة السفر الجديدة",
+        "title": "اكتشف",
+        "title2": "مغامرتك القادمة",
+        "subtitle": "احجز رحلات الطيران والفنادق والتجارب بسهولة."
+    },
+    "home": {
+        "plan_trip": "خطط لرحلتك",
+        "plan_trip_desc": "صمم رحلتك المثالية",
+        "explore": "استكشف الوجهات",
+        "explore_desc": "انقر على أي موقع للتفاصيل",
+        "select_destination": "اختر وجهة لعرض التفاصيل",
+        "find_destinations": "ابحث عن الوجهات المثالية",
+        "budget": "الميزانية",
+        "trip_duration": "مدة الرحلة",
+        "live_deals": "عروض حية",
+        "limited_offers": "عروض لفترة محدودة",
+        "flight_to": "رحلة إلى",
+        "lock_price": "احجز هذا السعر",
+        "why_voyager": "لماذا تختار فوياجر؟",
+        "why_voyager_desc": "مستقبل حجز السفر، اليوم",
+        "best_prices": "أفضل الأسعار",
+        "best_prices_desc": "تتبع الأسعار والتنبيهات في الوقت الفعلي",
+        "secure": "آمن",
+        "secure_desc": "تشفير بمستوى البنوك لبياناتك",
+        "personalized": "مخصص",
+        "personalized_desc": "تجارب مصممة خصيصاً لك",
+        "fast_booking": "حجز سريع",
+        "fast_booking_desc": "عملية حجز سريعة وسهلة"
+    },
+    "travel_styles": {
+        "beach": "شاطئ",
+        "adventure": "مغامرة",
+        "culture": "ثقافة",
+        "luxury": "فخامة",
+        "budget": "اقتصادي",
+        "food": "طعام"
     },
     "search": {
         "round_trip": "ذهاب وعودة",
@@ -37,16 +85,47 @@
         "economy": "اقتصادية",
         "business": "رجال أعمال",
         "first": "أولى",
-        "search_flights": "بحث عن رحلات"
+        "search_flights": "بحث عن رحلات",
+        "search_hotels": "بحث عن فنادق",
+        "where_from": "من أين؟",
+        "where_to": "إلى أين؟",
+        "select_date": "اختر التاريخ",
+        "adults": "بالغين",
+        "children": "أطفال"
     },
     "flights": {
+        "title": "اختر رحلتك",
         "select": "اختر الرحلة",
         "details": "تفاصيل الرحلة",
         "stops": "توقفات",
         "duration": "المدة",
         "price": "السعر",
         "airline": "شركة الطيران",
-        "no_flights": "لم يتم العثور على رحلات"
+        "no_flights": "لم يتم العثور على رحلات",
+        "showing_results": "عرض",
+        "results": "نتيجة",
+        "sort_by": "ترتيب حسب",
+        "cheapest": "الأرخص أولاً",
+        "fastest": "الأسرع أولاً",
+        "best_value": "أفضل قيمة",
+        "search_again": "بحث مرة أخرى",
+        "direct_flight": "رحلة مباشرة",
+        "searching": "جاري البحث عن أفضل الرحلات..."
+    },
+    "hotels": {
+        "title": "اختر فندقك",
+        "search_hotels": "البحث عن فنادق",
+        "per_night": "لليلة",
+        "no_hotels": "لم يتم العثور على فنادق",
+        "city": "المدينة",
+        "check_in": "تسجيل الدخول",
+        "check_out": "تسجيل الخروج",
+        "guests": "الضيوف",
+        "recommended": "موصى به",
+        "price_low": "السعر: من الأقل",
+        "price_high": "السعر: من الأعلى",
+        "top_rated": "الأعلى تقييماً",
+        "searching": "جاري البحث عن أفضل الفنادق..."
     },
     "footer": {
         "tagline": "اكتشف العالم براحة وأناقة مميزة. رحلتك تبدأ من هنا.",
@@ -82,5 +161,28 @@
         "taxes": "الضرائب والرسوم",
         "seat_selection": "اختيار المقعد",
         "total": "الإجمالي"
+    },
+    "dashboard": {
+        "title": "لوحة التحكم",
+        "upcoming_trips": "الرحلات القادمة",
+        "total_bookings": "إجمالي الحجوزات",
+        "loyalty_points": "نقاط الولاء",
+        "wallet_balance": "رصيد المحفظة",
+        "view_wallet": "عرض المحفظة",
+        "next_trip": "الرحلة القادمة",
+        "no_upcoming": "لا توجد رحلات قادمة",
+        "no_upcoming_desc": "لم تحجز أي رحلات بعد.",
+        "book_flight": "احجز رحلة",
+        "recent_bookings": "الحجوزات الأخيرة",
+        "upcoming": "القادمة",
+        "past": "السابقة",
+        "total_paid": "المبلغ المدفوع",
+        "loading": "جاري تحميل لوحة التحكم..."
+    },
+    "loading": {
+        "flights": "جاري البحث عن أفضل الرحلات...",
+        "hotels": "جاري البحث عن أفضل الفنادق...",
+        "dashboard": "جاري تحميل لوحة التحكم...",
+        "general": "جاري التحميل..."
     }
 }

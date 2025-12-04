@@ -4,15 +4,28 @@ import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { Plane, Calendar, MapPin } from "lucide-react";
+import { Plane, Calendar, MapPin, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Booking {
     id: number;
     pnr: string;
     status: string;
     created_at: string;
+    total_price: number;
     flight: {
         flight_number: string;
         departure_time: string;
@@ -26,24 +39,47 @@ interface Booking {
 export default function TripsPage() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [cancelling, setCancelling] = useState<number | null>(null);
+    const { toast } = useToast();
+
+    const fetchBookings = async () => {
+        try {
+            const response = await api.get('/bookings');
+            // Filter for upcoming trips
+            const upcoming = response.data.filter((b: Booking) =>
+                b.flight && new Date(b.flight.departure_time) > new Date() && b.status !== 'cancelled'
+            );
+            setBookings(upcoming);
+        } catch (error) {
+            console.error("Failed to fetch bookings", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchBookings = async () => {
-            try {
-                const response = await api.get('/bookings');
-                // Filter for upcoming trips (simplified logic)
-                const upcoming = response.data.filter((b: Booking) =>
-                    b.flight && new Date(b.flight.departure_time) > new Date()
-                );
-                setBookings(upcoming);
-            } catch (error) {
-                console.error("Failed to fetch bookings", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchBookings();
     }, []);
+
+    const handleCancelBooking = async (bookingId: number) => {
+        setCancelling(bookingId);
+        try {
+            await api.post(`/bookings/${bookingId}/cancel`);
+            toast({
+                title: "Booking Cancelled",
+                description: "Your booking has been cancelled. Refund will be credited to your wallet.",
+            });
+            fetchBookings(); // Refresh the list
+        } catch (error: any) {
+            toast({
+                title: "Cancellation Failed",
+                description: error.response?.data?.message || "Failed to cancel booking",
+                variant: "destructive"
+            });
+        } finally {
+            setCancelling(null);
+        }
+    };
 
     return (
         <DashboardLayout>
@@ -62,7 +98,11 @@ export default function TripsPage() {
                                 <div className="flex flex-col md:flex-row justify-between gap-6">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold uppercase">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                                                booking.status === 'confirmed' 
+                                                    ? 'bg-green-100 text-green-700' 
+                                                    : 'bg-blue-100 text-blue-700'
+                                            }`}>
                                                 {booking.status}
                                             </span>
                                             <span className="text-sm text-muted-foreground">PNR: {booking.pnr}</span>
@@ -96,7 +136,37 @@ export default function TripsPage() {
                                         <Link href={`/dashboard/tickets/${booking.id}`}>
                                             <Button variant="outline" className="w-full">View Ticket</Button>
                                         </Link>
-                                        <Button>Check In</Button>
+                                        <Button className="w-full">Check In</Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" className="w-full" disabled={cancelling === booking.id}>
+                                                    {cancelling === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle className="flex items-center gap-2">
+                                                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                                                        Cancel Booking?
+                                                    </AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to cancel your booking to{' '}
+                                                        <strong>{booking.flight.destination_airport.city}</strong> (PNR: {booking.pnr})?
+                                                        <br /><br />
+                                                        If you have already paid, the amount of <strong>${booking.total_price}</strong> will be refunded to your wallet.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleCancelBooking(booking.id)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    >
+                                                        Yes, Cancel It
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </div>
                             </CardContent>

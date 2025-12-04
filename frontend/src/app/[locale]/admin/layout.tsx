@@ -4,7 +4,7 @@ import { useAuth } from '@/context/auth-context';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { LayoutDashboard, Plane, MapPin, Building2, LogOut, Users, Ticket } from 'lucide-react';
+import { LayoutDashboard, Plane, MapPin, Building2, LogOut, Users, Ticket, Hotel } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -30,6 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'Flights', href: '/admin/flights', icon: Plane },
         { name: 'Airlines', href: '/admin/airlines', icon: Building2 },
         { name: 'Airports', href: '/admin/airports', icon: MapPin },
+        { name: 'Hotels', href: '/admin/hotels', icon: Hotel },
         { name: 'Bookings', href: '/admin/bookings', icon: Ticket },
         { name: 'Users', href: '/admin/users', icon: Users },
     ];

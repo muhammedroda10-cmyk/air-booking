@@ -9,8 +9,8 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// List of public endpoints that don't require authentication
-const publicEndpoints = [
+// Public GET endpoints that don't require authentication
+const publicGetEndpoints = [
     '/flights/search',
     '/flights/routes',
     '/flights',
@@ -18,6 +18,12 @@ const publicEndpoints = [
     '/airlines',
     '/hotels',
     '/hotels/search',
+    '/blog',
+    '/promotions',
+];
+
+// Public POST endpoints
+const publicPostEndpoints = [
     '/register',
     '/login',
     '/forgot-password',
@@ -26,14 +32,24 @@ const publicEndpoints = [
     '/newsletter',
 ];
 
-const isPublicEndpoint = (url: string | undefined): boolean => {
+const isPublicEndpoint = (url: string | undefined, method: string | undefined): boolean => {
     if (!url) return false;
-    return publicEndpoints.some(endpoint => url.includes(endpoint));
+    const httpMethod = (method || 'get').toLowerCase();
+
+    if (httpMethod === 'get') {
+        return publicGetEndpoints.some(endpoint => url.includes(endpoint));
+    }
+
+    if (httpMethod === 'post') {
+        return publicPostEndpoints.some(endpoint => url.includes(endpoint));
+    }
+
+    return false;
 };
 
 api.interceptors.request.use((config) => {
     // Only add token for non-public endpoints
-    if (!isPublicEndpoint(config.url)) {
+    if (!isPublicEndpoint(config.url, config.method)) {
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -46,7 +62,7 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         // Only redirect to login for 401 on protected endpoints
-        if (error.response?.status === 401 && !isPublicEndpoint(error.config?.url)) {
+        if (error.response?.status === 401 && !isPublicEndpoint(error.config?.url, error.config?.method)) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {

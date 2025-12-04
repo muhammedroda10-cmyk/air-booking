@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Globe, User, Plane } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { useLanguage } from "@/context/language-context"
 export function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
     const [scrolled, setScrolled] = React.useState(false)
-    const { toggleLanguage, t } = useLanguage()
+    const { language, switchLanguage, t } = useLanguage()
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -30,43 +30,50 @@ export function Navbar() {
         >
             <div className="container mx-auto px-6 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 group">
+                <LocaleLink href="/" className="flex items-center gap-3 group">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <Plane className="w-5 h-5 text-primary rotate-[-45deg]" />
                     </div>
                     <span className="text-xl font-bold tracking-widest text-slate-900 dark:text-white uppercase">
                         Voyager
                     </span>
-                </Link>
+                </LocaleLink>
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-10">
-                    <Link href="/flights" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
+                    <LocaleLink href="/flights" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
                         {t.nav.flights}
-                    </Link>
-                    <Link href="/hotels" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
+                    </LocaleLink>
+                    <LocaleLink href="/hotels" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
                         {t.nav.hotels}
-                    </Link>
-                    <Link href="/deals" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
+                    </LocaleLink>
+                    <LocaleLink href="/deals" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
                         {t.nav.deals}
-                    </Link>
-                    <Link href="/support" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
+                    </LocaleLink>
+                    <LocaleLink href="/support" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors dark:text-slate-300">
                         {t.nav.support}
-                    </Link>
+                    </LocaleLink>
                 </nav>
 
                 {/* Actions */}
                 <div className="hidden md:flex items-center gap-4">
-                    <Button variant="ghost" size="sm" onClick={toggleLanguage} className="text-slate-600 dark:text-slate-300 hover:text-primary">
-                        <Globe className="w-4 h-4 mr-2" />
-                        <span className="text-xs uppercase font-semibold">EN</span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => switchLanguage(language === 'en' ? 'ar' : 'en')}
+                        className="text-slate-600 dark:text-slate-300 hover:text-primary gap-2"
+                    >
+                        <Globe className="w-4 h-4" />
+                        <span className="text-xs uppercase font-semibold">
+                            {language === 'en' ? 'عربي' : 'EN'}
+                        </span>
                     </Button>
-                    <Link href="/login">
+                    <LocaleLink href="/login">
                         <Button variant="default" size="sm" className="rounded-full px-6 bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
                             <User className="w-4 h-4 mr-2" />
                             {t.nav.signin}
                         </Button>
-                    </Link>
+                    </LocaleLink>
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -88,22 +95,30 @@ export function Navbar() {
                         className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 overflow-hidden"
                     >
                         <div className="container mx-auto px-6 py-6 flex flex-col gap-4">
-                            <Link href="/flights" className="text-base font-medium py-2 text-slate-900 dark:text-white">
+                            <LocaleLink href="/flights" className="text-base font-medium py-2 text-slate-900 dark:text-white">
                                 {t.nav.flights}
-                            </Link>
-                            <Link href="/hotels" className="text-base font-medium py-2 text-slate-900 dark:text-white">
+                            </LocaleLink>
+                            <LocaleLink href="/hotels" className="text-base font-medium py-2 text-slate-900 dark:text-white">
                                 {t.nav.hotels}
-                            </Link>
-                            <Link href="/deals" className="text-base font-medium py-2 text-slate-900 dark:text-white">
+                            </LocaleLink>
+                            <LocaleLink href="/deals" className="text-base font-medium py-2 text-slate-900 dark:text-white">
                                 {t.nav.deals}
-                            </Link>
+                            </LocaleLink>
                             <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                            <Link href="/login">
+                            <Button
+                                variant="outline"
+                                onClick={() => switchLanguage(language === 'en' ? 'ar' : 'en')}
+                                className="w-full justify-center gap-2"
+                            >
+                                <Globe className="w-4 h-4" />
+                                {language === 'en' ? 'العربية' : 'English'}
+                            </Button>
+                            <LocaleLink href="/login">
                                 <Button className="w-full justify-center gap-2 rounded-full">
                                     <User className="w-4 h-4" />
                                     {t.nav.signin}
                                 </Button>
-                            </Link>
+                            </LocaleLink>
                         </div>
                     </motion.div>
                 )}
@@ -111,4 +126,3 @@ export function Navbar() {
         </header>
     )
 }
-
