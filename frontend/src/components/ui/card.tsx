@@ -4,15 +4,16 @@ import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
     HTMLDivElement,
-    HTMLMotionProps<"div"> & { hoverEffect?: boolean }
->(({ className, hoverEffect = true, ...props }, ref) => (
+    HTMLMotionProps<"div"> & { hoverEffect?: boolean; glass?: boolean }
+>(({ className, hoverEffect = true, glass = false, ...props }, ref) => (
     <motion.div
         ref={ref}
         initial={hoverEffect ? { y: 0 } : undefined}
         whileHover={hoverEffect ? { y: -5 } : undefined}
         transition={{ type: "spring", stiffness: 300 }}
         className={cn(
-            "rounded-lg border bg-card text-card-foreground shadow-sm glass",
+            "rounded-lg border bg-card text-card-foreground shadow-sm",
+            glass && "glass",
             className
         )}
         {...props}

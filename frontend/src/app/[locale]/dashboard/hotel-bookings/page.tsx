@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { DashboardLayout } from '@/components/layouts/dashboard-layout';
+import { UserLayout } from '@/components/layouts/user-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,7 +80,7 @@ export default function HotelBookingsPage() {
     };
 
     return (
-        <DashboardLayout>
+        <UserLayout>
             <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Hotel Bookings</h1>
                 <p className="text-muted-foreground">Manage your hotel reservations.</p>
@@ -194,6 +194,6 @@ export default function HotelBookingsPage() {
                     </CardContent>
                 </Card>
             )}
-        </DashboardLayout>
+        </UserLayout>
     );
 }

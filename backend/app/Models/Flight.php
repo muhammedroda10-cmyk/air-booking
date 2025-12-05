@@ -10,7 +10,14 @@ class Flight extends Model
     use HasFactory;
     protected $fillable = [
         'airline_id', 'flight_number', 'origin_airport_id', 'destination_airport_id',
-        'departure_time', 'arrival_time', 'aircraft_type', 'base_price'
+        'departure_time', 'arrival_time', 'aircraft_type', 'base_price',
+        'default_baggage', 'default_cabin_baggage'
+    ];
+
+    protected $casts = [
+        'base_price' => 'decimal:2',
+        'default_baggage' => 'integer',
+        'default_cabin_baggage' => 'integer',
     ];
 
     public function airline()
@@ -36,5 +43,18 @@ class Flight extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(FlightPackage::class);
+    }
+
+    /**
+     * Get the cheapest package for this flight
+     */
+    public function getCheapestPackageAttribute()
+    {
+        return $this->packages()->orderBy('price_modifier', 'asc')->first();
     }
 }

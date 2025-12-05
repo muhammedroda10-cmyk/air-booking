@@ -13,11 +13,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth()
 
     const navItems = [
-        { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-        { href: "/dashboard/trips", label: "My Trips", icon: Plane },
+        { href: "/dashboard", label: "Home", icon: LayoutDashboard },
         { href: "/dashboard/hotel-bookings", label: "Hotel Bookings", icon: Building2 },
         { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
-        { href: "/dashboard/history", label: "History", icon: History },
         { href: "/dashboard/profile", label: "Profile", icon: User },
         { href: "/dashboard/settings", label: "Settings", icon: Settings },
     ]

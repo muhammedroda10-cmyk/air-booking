@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { motion } from "framer-motion"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { SearchWidget } from "@/components/search-widget"
@@ -51,7 +52,9 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="relative z-30"
           >
-            <SearchWidget />
+            <Suspense fallback={<div className="h-48 bg-white/20 backdrop-blur-xl rounded-[2rem] animate-pulse" />}>
+              <SearchWidget />
+            </Suspense>
           </motion.div>
         </div>
       </section>

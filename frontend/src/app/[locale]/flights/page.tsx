@@ -16,12 +16,14 @@ import { ArrowUpDown, SlidersHorizontal } from "lucide-react"
 interface Flight {
     id: number;
     flight_number: string;
-    airline: { name: string };
+    airline: { id: number; name: string };
     origin_airport: { code: string; city: string };
     destination_airport: { code: string; city: string };
     departure_time: string;
     arrival_time: string;
     base_price: number;
+    default_baggage?: number;
+    default_cabin_baggage?: number;
 }
 
 export default function FlightsPage() {
@@ -38,6 +40,7 @@ function FlightsContent() {
     const searchParams = useSearchParams()
     const { t } = useLanguage()
     const [flights, setFlights] = useState<Flight[]>([])
+    const [availableAirlines, setAvailableAirlines] = useState<{ id: number; name: string }[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -53,7 +56,20 @@ function FlightsContent() {
                     airline_id: searchParams.get("airline_id"),
                 }
                 const response = await api.get('/flights/search', { params })
-                setFlights(Array.isArray(response.data) ? response.data : response.data.data || [])
+                const fetchedFlights = Array.isArray(response.data) ? response.data : response.data.data || []
+                setFlights(fetchedFlights)
+
+                // Only update available airlines if no airline filter is active
+                // This prevents the filter list from shrinking to only the selected airline
+                if (!searchParams.get("airline_id")) {
+                    const uniqueAirlinesMap = new Map();
+                    fetchedFlights.forEach((f: Flight) => {
+                        if (f.airline) {
+                            uniqueAirlinesMap.set(f.airline.id, { id: f.airline.id, name: f.airline.name });
+                        }
+                    });
+                    setAvailableAirlines(Array.from(uniqueAirlinesMap.values()));
+                }
             } catch (error) {
                 console.error("Failed to fetch flights", error)
             } finally {
@@ -86,7 +102,7 @@ function FlightsContent() {
                         {/* Sidebar */}
                         <aside className="w-full lg:w-80 shrink-0">
                             <div className="sticky top-24">
-                                <FilterSidebar />
+                                <FilterSidebar availableAirlines={availableAirlines} />
                             </div>
                         </aside>
 
@@ -121,6 +137,8 @@ function FlightsContent() {
                                             price={`$${flight.base_price}`}
                                             stops={0}
                                             totalDuration="2h 30m"
+                                            baggageAllowance={flight.default_baggage || 23}
+                                            cabinBaggage={flight.default_cabin_baggage || 7}
                                             segments={[
                                                 {
                                                     airline: flight.airline?.name || 'Airline',

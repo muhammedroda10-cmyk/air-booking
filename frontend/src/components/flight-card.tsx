@@ -6,7 +6,7 @@ import { Plane, Clock, ChevronDown, Luggage, Utensils, Wifi } from "lucide-react
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/context/language-context"
 
@@ -26,16 +26,28 @@ interface FlightCardProps {
     segments: FlightSegment[]
     stops: number
     totalDuration: string
+    baggageAllowance?: number
+    cabinBaggage?: number
+    mealsIncluded?: boolean
 }
 
-export function FlightCard({ id, price, segments, stops, totalDuration }: FlightCardProps) {
+export function FlightCard({ id, price, segments, stops, totalDuration, baggageAllowance = 23, cabinBaggage = 7, mealsIncluded = false }: FlightCardProps) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { t } = useLanguage()
     const [expanded, setExpanded] = React.useState(false)
 
     // For demo, just use the first segment for the main view
     const mainSegment = segments[0]
     const lastSegment = segments[segments.length - 1]
+
+    const handleSelectFlight = () => {
+        // Navigate to package selection page
+        const adults = searchParams.get('adults') || '1'
+        const children = searchParams.get('children') || '0'
+        const infants = searchParams.get('infants') || '0'
+        router.push(`/flights/${id}/packages?adults=${adults}&children=${children}&infants=${infants}`)
+    }
 
     return (
         <Card className="mb-4 overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-slate-900 group">
@@ -96,9 +108,23 @@ export function FlightCard({ id, price, segments, stops, totalDuration }: Flight
                             <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{price}</p>
                         </div>
 
-                        <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all" onClick={() => router.push(`/book?flight_id=${id}`)}>
+                        <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all" onClick={handleSelectFlight}>
                             {t.flights.select}
                         </Button>
+
+                        {/* Baggage Info */}
+                        <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                            <div className="flex items-center gap-1">
+                                <Luggage className="w-3.5 h-3.5" />
+                                <span>{baggageAllowance}kg</span>
+                            </div>
+                            {mealsIncluded && (
+                                <div className="flex items-center gap-1">
+                                    <Utensils className="w-3.5 h-3.5" />
+                                    <span>Meal</span>
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             onClick={() => setExpanded(!expanded)}

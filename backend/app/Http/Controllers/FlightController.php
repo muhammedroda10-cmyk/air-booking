@@ -3,15 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Flight;
+use App\DTOs\Flight\FlightSearchRequest;
+use App\Services\FlightSearchService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class FlightController extends Controller
 {
+    public function __construct(
+        protected ?FlightSearchService $flightSearchService = null
+    ) {}
+
     public function index()
     {
         return Flight::with(['airline', 'originAirport', 'destinationAirport'])->get();
     }
+
 
     public function store(Request $request)
     {
@@ -100,7 +107,14 @@ class FlightController extends Controller
         // Order by departure time
         $query->orderBy('departure_time', 'asc');
 
-        return $query->get();
+        $flights = $query->get();
+
+        // Add default baggage info to each flight
+        return $flights->map(function ($flight) {
+            $flight->default_baggage = $flight->default_baggage ?? 23;
+            $flight->default_cabin_baggage = $flight->default_cabin_baggage ?? 7;
+            return $flight;
+        });
     }
 
     /**
@@ -125,5 +139,82 @@ class FlightController extends Controller
                 ];
             })
             ->values();
+    }
+
+    /**
+     * Search flights from external suppliers.
+     */
+    public function searchExternal(Request $request)
+    {
+        $request->validate([
+            'from' => 'required|string|min:3|max:3',
+            'to' => 'required|string|min:3|max:3',
+            'date' => 'required|date',
+            'return_date' => 'nullable|date|after:date',
+            'adults' => 'integer|min:1|max:9',
+            'children' => 'integer|min:0|max:9',
+            'infants' => 'integer|min:0|max:9',
+            'cabin' => 'string|in:economy,premium_economy,business,first',
+            'trip_type' => 'string|in:oneWay,roundTrip',
+        ]);
+
+        if (!$this->flightSearchService) {
+            $this->flightSearchService = app(FlightSearchService::class);
+        }
+
+        $searchRequest = FlightSearchRequest::fromRequest($request->all());
+        $results = $this->flightSearchService->search($searchRequest);
+
+        // Apply additional filters if provided
+        if ($request->has('min_price') || $request->has('max_price') || $request->has('airline_code') || $request->has('max_stops')) {
+            $results = $this->flightSearchService->filterResults($results, $request->only([
+                'min_price',
+                'max_price',
+                'airline_code',
+                'max_stops',
+                'refundable',
+            ]));
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $results->map(fn($offer) => $offer->toArray())->values(),
+            'meta' => [
+                'total' => $results->count(),
+                'search_params' => $searchRequest->toArray(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get flight offer details from a supplier.
+     */
+    public function getOfferDetails(Request $request)
+    {
+        $request->validate([
+            'supplier_code' => 'required|string',
+            'reference_id' => 'required|string',
+        ]);
+
+        if (!$this->flightSearchService) {
+            $this->flightSearchService = app(FlightSearchService::class);
+        }
+
+        $offer = $this->flightSearchService->getOfferDetails(
+            $request->supplier_code,
+            $request->reference_id
+        );
+
+        if (!$offer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Offer not found or expired',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $offer->toArray(),
+        ]);
     }
 }

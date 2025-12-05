@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ export default function WalletPage() {
     };
 
     return (
-        <DashboardLayout>
+        <UserLayout>
             <div className="space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">My Wallet</h1>
@@ -83,7 +83,7 @@ export default function WalletPage() {
                                     <div>
                                         <p className="text-blue-100 font-medium mb-1">Total Balance</p>
                                         <h2 className="text-5xl font-bold tracking-tight">
-                                            ${wallet?.balance.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                                            ${(wallet?.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                         </h2>
                                     </div>
                                     <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
@@ -161,8 +161,8 @@ export default function WalletPage() {
                                             <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${tx.type === 'credit'
-                                                            ? 'bg-green-100 text-green-600 dark:bg-green-900/20'
-                                                            : 'bg-red-100 text-red-600 dark:bg-red-900/20'
+                                                        ? 'bg-green-100 text-green-600 dark:bg-green-900/20'
+                                                        : 'bg-red-100 text-red-600 dark:bg-red-900/20'
                                                         }`}>
                                                         {tx.type === 'credit' ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
                                                     </div>
@@ -188,6 +188,6 @@ export default function WalletPage() {
                     </div>
                 </div>
             </div>
-        </DashboardLayout>
+        </UserLayout>
     );
 }

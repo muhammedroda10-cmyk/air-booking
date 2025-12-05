@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Plane, MapPin, Search, User, Calendar, Plus, X, SlidersHorizontal, Building } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 import api from "@/lib/api"
 import { useLanguage } from "@/context/language-context"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -43,6 +43,7 @@ type TripType = "round-trip" | "one-way" | "open-return" | "multi-city"
 export function SearchWidget({ defaultTab = "flights" }: { defaultTab?: string }) {
     const router = useRouter()
     const params = useParams()
+    const searchParams = useSearchParams()
     const locale = (params?.locale as string) || 'en'
     const { t, dir } = useLanguage()
     const [activeTab, setActiveTab] = React.useState(defaultTab)
@@ -95,6 +96,68 @@ export function SearchWidget({ defaultTab = "flights" }: { defaultTab?: string }
         }
         fetchData()
     }, [])
+
+    // Initialize form values from URL search params
+    React.useEffect(() => {
+        const fromParam = searchParams.get("from")
+        const toParam = searchParams.get("to")
+        const typeParam = searchParams.get("type") as TripType | null
+        const dateParam = searchParams.get("date")
+        const returnDateParam = searchParams.get("returnDate")
+        const adultsParam = searchParams.get("adults")
+        const childrenParam = searchParams.get("children")
+        const infantsParam = searchParams.get("infants")
+        const cabinParam = searchParams.get("cabin")
+        const nearbyParam = searchParams.get("nearby")
+        const directParam = searchParams.get("direct")
+        const minPriceParam = searchParams.get("min_price")
+        const maxPriceParam = searchParams.get("max_price")
+        const maxStopsParam = searchParams.get("max_stops")
+
+        // Set origin and destination
+        if (fromParam) setFrom(fromParam)
+        if (toParam) setTo(toParam)
+
+        // Set trip type
+        if (typeParam && ["round-trip", "one-way", "open-return", "multi-city"].includes(typeParam)) {
+            setTripType(typeParam)
+        }
+
+        // Set dates
+        if (dateParam) {
+            const departureDate = new Date(dateParam)
+            if (typeParam === "round-trip" && returnDateParam) {
+                const returnDate = new Date(returnDateParam)
+                setDateRange({ from: departureDate, to: returnDate })
+            } else if (typeParam === "round-trip") {
+                setDateRange({ from: departureDate, to: undefined })
+            } else {
+                setSingleDate(departureDate)
+            }
+        }
+
+        // Set travelers
+        if (adultsParam) {
+            const adults = parseInt(adultsParam) || 1
+            const children = parseInt(childrenParam || "0")
+            const infants = parseInt(infantsParam || "0")
+            setTravelers({ adults, children, infants })
+        }
+
+        // Set cabin class
+        if (cabinParam) setCabinClass(cabinParam)
+
+        // Set filter options
+        if (nearbyParam === "true") setAddNearbyAirports(true)
+        if (directParam === "true") setDirectFlightsOnly(true)
+        if (minPriceParam || maxPriceParam) {
+            setPriceRange([
+                parseInt(minPriceParam || "0"),
+                parseInt(maxPriceParam || "5000")
+            ])
+        }
+        if (maxStopsParam) setMaxStops(parseInt(maxStopsParam))
+    }, [searchParams])
 
     const handleSearch = () => {
         const params = new URLSearchParams()

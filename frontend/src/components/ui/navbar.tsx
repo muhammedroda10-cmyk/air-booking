@@ -3,15 +3,26 @@
 import * as React from "react"
 import { LocaleLink } from "@/components/locale-link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Globe, User, Plane } from "lucide-react"
+import { Menu, X, Globe, User, Plane, LogOut, LayoutDashboard, Wallet, Settings, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/context/language-context"
+import { useAuth } from "@/context/auth-context"
+import { NotificationBell } from "@/components/notification-bell"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
     const [scrolled, setScrolled] = React.useState(false)
     const { language, switchLanguage, t } = useLanguage()
+    const { user, isAuthenticated, isLoading, logout } = useAuth()
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -68,12 +79,80 @@ export function Navbar() {
                             {language === 'en' ? 'عربي' : 'EN'}
                         </span>
                     </Button>
-                    <LocaleLink href="/login">
-                        <Button variant="default" size="sm" className="rounded-full px-6 bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
-                            <User className="w-4 h-4 mr-2" />
-                            {t.nav.signin}
-                        </Button>
-                    </LocaleLink>
+
+                    {isLoading ? (
+                        <div className="w-24 h-9 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                    ) : isAuthenticated && user ? (
+                        <>
+                            <NotificationBell />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="default" size="sm" className="rounded-full px-6 bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+                                        <User className="w-4 h-4 mr-2" />
+                                        {user.name}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold">{user.name}</span>
+                                            <span className="text-xs text-slate-500 font-normal">{user.email}</span>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard" className="cursor-pointer">
+                                            <LayoutDashboard className="w-4 h-4 mr-2" />
+                                            {t.nav.dashboard || 'Dashboard'}
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard/trips" className="cursor-pointer">
+                                            <Plane className="w-4 h-4 mr-2" />
+                                            My Trips
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard/history" className="cursor-pointer">
+                                            <Clock className="w-4 h-4 mr-2" />
+                                            History
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard/wallet" className="cursor-pointer">
+                                            <Wallet className="w-4 h-4 mr-2" />
+                                            {t.nav.wallet || 'Wallet'}
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard/profile" className="cursor-pointer">
+                                            <User className="w-4 h-4 mr-2" />
+                                            Profile
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <LocaleLink href="/dashboard/settings" className="cursor-pointer">
+                                            <Settings className="w-4 h-4 mr-2" />
+                                            {t.nav.settings || 'Settings'}
+                                        </LocaleLink>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600 dark:text-red-400">
+                                        <LogOut className="w-4 h-4 mr-2" />
+                                        {t.nav.signout || 'Sign Out'}
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
+                    ) : (
+                        <LocaleLink href="/login">
+                            <Button variant="default" size="sm" className="rounded-full px-6 bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
+                                <User className="w-4 h-4 mr-2" />
+                                {t.nav.signin}
+                            </Button>
+                        </LocaleLink>
+                    )}
                 </div>
 
                 {/* Mobile Menu Toggle */}

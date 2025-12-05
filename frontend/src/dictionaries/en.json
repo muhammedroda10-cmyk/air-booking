@@ -29,6 +29,8 @@
         "signin": "Sign In",
         "signout": "Sign Out",
         "dashboard": "Dashboard",
+        "wallet": "Wallet",
+        "settings": "Settings",
         "admin": "Admin Panel",
         "blog": "Blog",
         "about": "About",

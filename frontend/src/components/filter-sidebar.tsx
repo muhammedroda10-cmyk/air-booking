@@ -15,23 +15,27 @@ interface Airline {
     name: string;
 }
 
-export function FilterSidebar() {
+export function FilterSidebar({ availableAirlines }: { availableAirlines?: Airline[] }) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [airlines, setAirlines] = React.useState<Airline[]>([])
     const [priceRange, setPriceRange] = React.useState([0, 2000])
 
     React.useEffect(() => {
-        const fetchAirlines = async () => {
-            try {
-                const response = await api.get('/airlines')
-                setAirlines(response.data.data || response.data)
-            } catch (error) {
-                console.error("Failed to fetch airlines", error)
+        if (availableAirlines && availableAirlines.length > 0) {
+            setAirlines(availableAirlines)
+        } else {
+            const fetchAirlines = async () => {
+                try {
+                    const response = await api.get('/airlines')
+                    setAirlines(response.data.data || response.data)
+                } catch (error) {
+                    console.error("Failed to fetch airlines", error)
+                }
             }
+            fetchAirlines()
         }
-        fetchAirlines()
-    }, [])
+    }, [availableAirlines])
 
     const updateFilters = (key: string, value: string | null) => {
         const params = new URLSearchParams(searchParams.toString())

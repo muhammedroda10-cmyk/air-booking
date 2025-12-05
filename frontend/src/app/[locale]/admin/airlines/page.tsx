@@ -3,11 +3,23 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash2, Plus, Star, Plane, Clock } from 'lucide-react';
 
 interface Airline {
     id: number;
     name: string;
     code: string;
+    logo_url: string | null;
+    country: string | null;
+    cancel_full_refund_hours: number;
+    cancel_75_refund_hours: number;
+    cancel_50_refund_hours: number;
+    cancellation_fee: number;
+    flights_count?: number;
+    reviews_count?: number;
+    average_rating?: number;
 }
 
 export default function AirlinesPage() {
@@ -30,7 +42,7 @@ export default function AirlinesPage() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this airline?')) return;
+        if (!confirm('Are you sure you want to delete this airline? This will also delete all associated flights.')) return;
         try {
             await api.delete(`/airlines/${id}`);
             setAirlines(airlines.filter((airline) => airline.id !== id));
@@ -40,65 +52,122 @@ export default function AirlinesPage() {
         }
     };
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return <div className="text-center py-8">Loading...</div>;
 
     return (
-        <div>
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-gray-800">Airlines</h1>
-                <Link
-                    href="/admin/airlines/create"
-                    className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-                >
-                    Add Airline
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">Airlines</h1>
+                    <p className="text-muted-foreground">Manage airlines and their cancellation policies</p>
+                </div>
+                <Link href="/admin/airlines/create">
+                    <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Airline
+                    </Button>
                 </Link>
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-white shadow-md">
-                <table className="min-w-full leading-normal">
-                    <thead>
-                        <tr>
-                            <th className="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                Code
-                            </th>
-                            <th className="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                Name
-                            </th>
-                            <th className="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {airlines.map((airline) => (
-                            <tr key={airline.id}>
-                                <td className="border-b border-gray-200 bg-white px-5 py-5 text-sm">
-                                    <p className="whitespace-no-wrap text-gray-900">{airline.code}</p>
-                                </td>
-                                <td className="border-b border-gray-200 bg-white px-5 py-5 text-sm">
-                                    <p className="whitespace-no-wrap text-gray-900">{airline.name}</p>
-                                </td>
-                                <td className="border-b border-gray-200 bg-white px-5 py-5 text-sm">
-                                    <div className="flex gap-2">
-                                        <Link
-                                            href={`/admin/airlines/${airline.id}/edit`}
-                                            className="text-blue-600 hover:text-blue-900"
-                                        >
-                                            Edit
-                                        </Link>
-                                        <button
-                                            onClick={() => handleDelete(airline.id)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <Card>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50 dark:bg-slate-800">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Airline</th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Country</th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Cancellation Policy</th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Stats</th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {airlines.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                            No airlines found
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    airlines.map((airline) => (
+                                        <tr key={airline.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                            <td className="px-4 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {airline.logo_url ? (
+                                                        <img src={airline.logo_url} alt={airline.name} className="w-10 h-10 rounded object-contain bg-white" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
+                                                            <Plane className="w-5 h-5 text-blue-600" />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="font-semibold">{airline.name}</p>
+                                                        <p className="text-xs text-muted-foreground font-mono">{airline.code}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4 text-sm">
+                                                {airline.country || '-'}
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="text-xs space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-3 h-3 text-green-500" />
+                                                        <span>100% refund: {airline.cancel_full_refund_hours / 24}+ days</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-3 h-3 text-yellow-500" />
+                                                        <span>75% refund: {airline.cancel_75_refund_hours / 24}-{airline.cancel_full_refund_hours / 24} days</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="w-3 h-3 text-orange-500" />
+                                                        <span>50% refund: {airline.cancel_50_refund_hours / 24}-{airline.cancel_75_refund_hours / 24} days</span>
+                                                    </div>
+                                                    <p className="text-muted-foreground">Fee: ${airline.cancellation_fee}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="space-y-1 text-sm">
+                                                    {airline.flights_count !== undefined && (
+                                                        <div className="flex items-center gap-1">
+                                                            <Plane className="w-3 h-3" />
+                                                            <span>{airline.flights_count} flights</span>
+                                                        </div>
+                                                    )}
+                                                    {airline.average_rating && (
+                                                        <div className="flex items-center gap-1">
+                                                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                            <span>{airline.average_rating} ({airline.reviews_count} reviews)</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <div className="flex gap-2">
+                                                    <Link href={`/admin/airlines/${airline.id}/edit`}>
+                                                        <Button size="sm" variant="ghost">
+                                                            <Pencil className="w-4 h-4" />
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-red-500"
+                                                        onClick={() => handleDelete(airline.id)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

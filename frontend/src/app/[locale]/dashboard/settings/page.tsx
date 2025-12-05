@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, Lock, Shield, Trash2 } from "lucide-react";
@@ -116,7 +116,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <DashboardLayout>
+        <UserLayout>
             <div className="mb-8">
                 <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
                 <p className="text-muted-foreground">Manage your account preferences.</p>
@@ -241,6 +241,6 @@ export default function SettingsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </DashboardLayout>
+        </UserLayout>
     );
 }
