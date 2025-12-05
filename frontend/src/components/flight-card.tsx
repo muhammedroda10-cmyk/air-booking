@@ -18,10 +18,11 @@ interface FlightSegment {
     duration: string
     airline: string
     flightNumber: string
+    airlineLogo?: string
 }
 
 interface FlightCardProps {
-    id: number
+    id: number | string
     price: string
     segments: FlightSegment[]
     stops: number
@@ -29,12 +30,29 @@ interface FlightCardProps {
     baggageAllowance?: number
     cabinBaggage?: number
     mealsIncluded?: boolean
+    refundable?: boolean
+    seatsLeft?: number
+    supplierCode?: string
+    referenceId?: string
 }
 
-export function FlightCard({ id, price, segments, stops, totalDuration, baggageAllowance = 23, cabinBaggage = 7, mealsIncluded = false }: FlightCardProps) {
+export function FlightCard({
+    id,
+    price,
+    segments,
+    stops,
+    totalDuration,
+    baggageAllowance = 23,
+    cabinBaggage = 7,
+    mealsIncluded = false,
+    refundable = false,
+    seatsLeft,
+    supplierCode,
+    referenceId
+}: FlightCardProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { t } = useLanguage()
+    const { t, dir } = useLanguage()
     const [expanded, setExpanded] = React.useState(false)
 
     // For demo, just use the first segment for the main view
@@ -42,11 +60,23 @@ export function FlightCard({ id, price, segments, stops, totalDuration, baggageA
     const lastSegment = segments[segments.length - 1]
 
     const handleSelectFlight = () => {
-        // Navigate to package selection page
+        // Navigate to package selection page with supplier info if available
         const adults = searchParams.get('adults') || '1'
         const children = searchParams.get('children') || '0'
         const infants = searchParams.get('infants') || '0'
-        router.push(`/flights/${id}/packages?adults=${adults}&children=${children}&infants=${infants}`)
+
+        // For database supplier, use the referenceId as the flight ID
+        // For external suppliers, use the full id with supplier info
+        const flightIdForRoute = supplierCode === 'database' && referenceId ? referenceId : id
+
+        let url = `/${(typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'en')}/flights/${flightIdForRoute}/packages?adults=${adults}&children=${children}&infants=${infants}`
+
+        // Add supplier info for external offers (not database)
+        if (supplierCode && supplierCode !== 'database' && referenceId) {
+            url += `&supplier=${supplierCode}&ref=${referenceId}`
+        }
+
+        router.push(url)
     }
 
     return (
@@ -104,8 +134,22 @@ export function FlightCard({ id, price, segments, stops, totalDuration, baggageA
                     {/* Price & Action */}
                     <div className="flex flex-col items-end gap-3 w-full md:w-1/4 pl-4 border-l border-slate-100 dark:border-slate-800">
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Price</p>
+                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">
+                                {dir === 'rtl' ? 'السعر الإجمالي' : 'Total Price'}
+                            </p>
                             <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{price}</p>
+                            <div className="flex items-center justify-end gap-2 mt-1">
+                                {refundable && (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
+                                        {dir === 'rtl' ? 'قابل للاسترداد' : 'Refundable'}
+                                    </Badge>
+                                )}
+                                {seatsLeft !== undefined && seatsLeft <= 5 && (
+                                    <Badge variant="secondary" className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px]">
+                                        {seatsLeft} {dir === 'rtl' ? 'مقاعد متبقية' : 'seats left'}
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
 
                         <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-indigo-500/20 transition-all" onClick={handleSelectFlight}>
@@ -121,7 +165,7 @@ export function FlightCard({ id, price, segments, stops, totalDuration, baggageA
                             {mealsIncluded && (
                                 <div className="flex items-center gap-1">
                                     <Utensils className="w-3.5 h-3.5" />
-                                    <span>Meal</span>
+                                    <span>{dir === 'rtl' ? 'وجبة' : 'Meal'}</span>
                                 </div>
                             )}
                         </div>

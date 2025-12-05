@@ -7,20 +7,30 @@ import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Wallet, ArrowUpRight, ArrowDownLeft, CreditCard, History } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, CreditCard, History, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Transaction {
     id: number;
     amount: number;
-    type: 'credit' | 'debit';
+    type: 'credit' | 'debit' | 'payment';
     description: string;
+    reference?: string;
     created_at: string;
 }
 
+interface WalletStats {
+    total_deposited: number;
+    total_spent: number;
+    transaction_count: number;
+}
+
 interface WalletData {
+    id: number;
     balance: number;
+    currency: string;
     transactions: Transaction[];
+    stats: WalletStats;
 }
 
 export default function WalletPage() {
@@ -29,6 +39,7 @@ export default function WalletPage() {
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -36,7 +47,8 @@ export default function WalletPage() {
         }
     }, [user]);
 
-    const fetchWallet = async () => {
+    const fetchWallet = async (showRefresh = false) => {
+        if (showRefresh) setRefreshing(true);
         try {
             const response = await api.get('/wallet');
             setWallet(response.data);
@@ -44,6 +56,7 @@ export default function WalletPage() {
             console.error('Failed to fetch wallet', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -51,12 +64,11 @@ export default function WalletPage() {
         e.preventDefault();
         setProcessing(true);
         try {
-            await api.post('/wallet/deposit', {
+            const response = await api.post('/wallet/deposit', {
                 amount: parseFloat(amount)
             });
+            setWallet(response.data);
             setAmount('');
-            fetchWallet();
-            // Ideally show a toast here
         } catch (error) {
             console.error('Deposit failed', error);
         } finally {
@@ -64,12 +76,27 @@ export default function WalletPage() {
         }
     };
 
+    const formatCurrency = (value: number) => {
+        return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
     return (
         <UserLayout>
             <div className="space-y-8">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">My Wallet</h1>
-                    <p className="text-muted-foreground">Manage your funds and view transaction history.</p>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">My Wallet</h1>
+                        <p className="text-muted-foreground">Manage your funds and view transaction history.</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fetchWallet(true)}
+                        disabled={refreshing}
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -83,7 +110,7 @@ export default function WalletPage() {
                                     <div>
                                         <p className="text-blue-100 font-medium mb-1">Total Balance</p>
                                         <h2 className="text-5xl font-bold tracking-tight">
-                                            ${(wallet?.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                            ${formatCurrency(wallet?.balance ?? 0)}
                                         </h2>
                                     </div>
                                     <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
@@ -97,14 +124,14 @@ export default function WalletPage() {
                                             <ArrowDownLeft className="w-4 h-4" />
                                             <span className="text-sm">Total Deposited</span>
                                         </div>
-                                        <p className="text-xl font-bold">$2,450.00</p>
+                                        <p className="text-xl font-bold">${formatCurrency(wallet?.stats?.total_deposited ?? 0)}</p>
                                     </div>
                                     <div className="flex-1 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/10">
                                         <div className="flex items-center gap-2 mb-1 text-blue-100">
                                             <ArrowUpRight className="w-4 h-4" />
                                             <span className="text-sm">Total Spent</span>
                                         </div>
-                                        <p className="text-xl font-bold">$1,230.50</p>
+                                        <p className="text-xl font-bold">${formatCurrency(wallet?.stats?.total_spent ?? 0)}</p>
                                     </div>
                                 </div>
                             </CardContent>

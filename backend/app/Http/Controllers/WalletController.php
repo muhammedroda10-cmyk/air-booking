@@ -2,90 +2,113 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Wallet;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class WalletController extends Controller
 {
+    /**
+     * Get the authenticated user's wallet with transactions
+     */
     public function show(Request $request)
     {
-        $wallet = $request->user()->wallet()->with('transactions')->firstOrCreate([
-            'user_id' => $request->user()->id
+        $wallet = $this->getOrCreateWallet($request->user());
+
+        // Load recent transactions
+        $wallet->load([
+            'transactions' => function ($query) {
+                $query->orderBy('created_at', 'desc')->limit(20);
+            }
         ]);
 
-        return $wallet;
+        // Calculate stats from transactions
+        $stats = $this->calculateStats($wallet);
+
+        return response()->json([
+            'id' => $wallet->id,
+            'balance' => round((float) $wallet->balance, 2),
+            'currency' => 'USD', // Default currency
+            'transactions' => $wallet->transactions,
+            'stats' => $stats,
+        ]);
     }
 
+    /**
+     * Deposit funds to wallet
+     */
     public function deposit(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:1|max:10000',
         ]);
 
-        $wallet = $request->user()->wallet()->firstOrCreate([
-            'user_id' => $request->user()->id
-        ]);
+        $wallet = $this->getOrCreateWallet($request->user());
+        $amount = round((float) $request->amount, 2);
 
-        DB::transaction(function () use ($wallet, $request) {
-            $wallet->increment('balance', $request->amount);
+        DB::transaction(function () use ($wallet, $amount) {
+            $wallet->increment('balance', $amount);
+
             $wallet->transactions()->create([
-                'amount' => $request->amount,
+                'amount' => $amount,
                 'type' => 'credit',
-                'description' => 'Deposit',
+                'description' => 'Wallet Deposit',
+                'reference' => 'DEP_' . strtoupper(uniqid()),
             ]);
         });
 
-        return $wallet->load('transactions');
-    }
-
-    public function pay(Request $request)
-    {
-        $request->validate([
-            'booking_id' => 'required|exists:bookings,id',
-            'amount' => 'required|numeric|min:0.01',
-        ]);
-
-        $booking = \App\Models\Booking::findOrFail($request->booking_id);
-
-        // Verify the booking belongs to the user
-        if ($booking->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // Check if already paid
-        if ($booking->payment_status === 'paid') {
-            return response()->json(['message' => 'Booking already paid'], 400);
-        }
-
-        $wallet = $request->user()->wallet()->firstOrCreate([
-            'user_id' => $request->user()->id
-        ]);
-
-        // Check sufficient balance
-        if ($wallet->balance < $request->amount) {
-            return response()->json(['message' => 'Insufficient wallet balance'], 400);
-        }
-
-        DB::transaction(function () use ($wallet, $booking, $request) {
-            // Deduct from wallet
-            $wallet->decrement('balance', $request->amount);
-            $wallet->transactions()->create([
-                'amount' => $request->amount,
-                'type' => 'debit',
-                'description' => "Payment for booking #{$booking->pnr}",
-            ]);
-
-            // Update booking status
-            $booking->update([
-                'payment_status' => 'paid',
-                'status' => 'confirmed',
-            ]);
-        });
+        $wallet->refresh();
+        $wallet->load(['transactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(20)]);
 
         return response()->json([
-            'message' => 'Payment successful',
-            'booking' => $booking->fresh()->load('passengers', 'flight.airline', 'flight.originAirport', 'flight.destinationAirport'),
-            'new_balance' => $wallet->fresh()->balance
+            'message' => 'Deposit successful',
+            'balance' => round((float) $wallet->balance, 2),
+            'transactions' => $wallet->transactions,
+            'stats' => $this->calculateStats($wallet),
         ]);
     }
+
+    /**
+     * Get wallet statistics
+     */
+    public function stats(Request $request)
+    {
+        $wallet = $this->getOrCreateWallet($request->user());
+        return response()->json($this->calculateStats($wallet));
+    }
+
+    /**
+     * Get or create wallet for user
+     */
+    private function getOrCreateWallet($user): Wallet
+    {
+        return $user->wallet()->firstOrCreate(
+            ['user_id' => $user->id],
+            ['balance' => 0]
+        );
+    }
+
+    /**
+     * Calculate wallet statistics from transactions
+     */
+    private function calculateStats(Wallet $wallet): array
+    {
+        $transactions = Transaction::where('wallet_id', $wallet->id)->get();
+
+        $totalDeposited = $transactions
+            ->where('type', 'credit')
+            ->sum('amount');
+
+        $totalSpent = $transactions
+            ->where('type', 'debit')
+            ->sum('amount');
+
+        return [
+            'total_deposited' => round((float) $totalDeposited, 2),
+            'total_spent' => round((float) $totalSpent, 2),
+            'transaction_count' => $transactions->count(),
+        ];
+    }
 }
+

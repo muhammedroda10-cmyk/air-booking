@@ -8,6 +8,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/flights/search', [\App\Http\Controllers\FlightController::class, 'search']);
+Route::get('/flights/search-external', [\App\Http\Controllers\FlightController::class, 'searchExternal']);
+Route::get('/flights/offer-details', [\App\Http\Controllers\FlightController::class, 'getOfferDetails']);
 Route::get('/flights/routes', [\App\Http\Controllers\FlightController::class, 'routes']);
 Route::get('/flights', [\App\Http\Controllers\FlightController::class, 'index']);
 Route::get('/flights/{flight}', [\App\Http\Controllers\FlightController::class, 'show']);
@@ -16,10 +18,6 @@ Route::get('/flights/{flight}/packages', [\App\Http\Controllers\FlightPackageCon
 Route::get('/airports', [\App\Http\Controllers\AirportController::class, 'index']);
 Route::get('/airlines', [\App\Http\Controllers\AirlineController::class, 'index']);
 Route::get('/airlines/{airline}', [\App\Http\Controllers\AirlineController::class, 'show']);
-
-// External flight search routes (supplier-based)
-Route::get('/flights/search-external', [\App\Http\Controllers\FlightController::class, 'searchExternal']);
-Route::get('/flights/offer-details', [\App\Http\Controllers\FlightController::class, 'getOfferDetails']);
 
 
 // Hotel public routes
@@ -56,7 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/wallet', [\App\Http\Controllers\WalletController::class, 'show']);
     Route::post('/wallet/deposit', [\App\Http\Controllers\WalletController::class, 'deposit']);
-    Route::post('/wallet/pay', [\App\Http\Controllers\WalletController::class, 'pay']);
+    Route::get('/wallet/stats', [\App\Http\Controllers\WalletController::class, 'stats']);
 
     Route::get('/bookings', [\App\Http\Controllers\BookingController::class, 'index']);
     Route::post('/bookings', [\App\Http\Controllers\BookingController::class, 'store']);
@@ -65,8 +63,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}/cancel-preview', [\App\Http\Controllers\TicketController::class, 'previewCancellation']);
     Route::post('/bookings/{booking}/cancel', [\App\Http\Controllers\TicketController::class, 'cancel']);
     Route::get('/bookings/{booking}/download', [\App\Http\Controllers\TicketController::class, 'download']);
+
     Route::post('/payments', [\App\Http\Controllers\PaymentController::class, 'store']);
-    Route::post('/payments/process', [\App\Http\Controllers\PaymentController::class, 'process']);
+    Route::get('/payments/{bookingId}/status', [\App\Http\Controllers\PaymentController::class, 'status']);
 
     Route::post('/hotel-bookings', [\App\Http\Controllers\HotelBookingController::class, 'store']);
     Route::get('/hotel-bookings', [\App\Http\Controllers\HotelBookingController::class, 'index']);

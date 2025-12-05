@@ -11,19 +11,87 @@ import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import api from "@/lib/api"
-import { ArrowUpDown, SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal } from "lucide-react"
+import { useLanguage } from "@/context/language-context"
 
-interface Flight {
-    id: number;
-    flight_number: string;
-    airline: { id: number; name: string };
-    origin_airport: { code: string; city: string };
-    destination_airport: { code: string; city: string };
-    departure_time: string;
-    arrival_time: string;
-    base_price: number;
-    default_baggage?: number;
-    default_cabin_baggage?: number;
+// Normalized flight offer from supplier
+interface FlightOffer {
+    id: string;
+    supplier_code: string;
+    reference_id: string;
+    price: {
+        total: number;
+        base_fare: number;
+        taxes: number;
+        currency: string;
+        currency_symbol: string;
+        formatted: string;
+    };
+    legs: Array<{
+        departure: {
+            city: string;
+            airport_code: string;
+            airport_name: string;
+            date_time: string;
+            time: string;
+        };
+        arrival: {
+            city: string;
+            airport_code: string;
+            airport_name: string;
+            date_time: string;
+            time: string;
+        };
+        duration: number;
+        duration_formatted: string;
+        stops: number;
+        cabin: string;
+        airline: {
+            id: number;
+            code: string;
+            name: string;
+            logo: string | null;
+        };
+        flight_number: string;
+        segments: Array<{
+            departure: {
+                city: string;
+                airport_code: string;
+                time: string;
+                date_time: string;
+            };
+            arrival: {
+                city: string;
+                airport_code: string;
+                time: string;
+                date_time: string;
+            };
+            airline: {
+                id: number;
+                code: string;
+                name: string;
+            };
+            flight_number: string;
+            duration: number;
+            duration_formatted: string;
+            luggage: string | null;
+            cabin: string;
+        }>;
+    }>;
+    validating_airline: {
+        id: number;
+        code: string;
+        name: string;
+        logo: string | null;
+    };
+    seats_available: number;
+    refundable: boolean;
+    valid_until: string;
+    passengers: {
+        adults: number;
+        children: number;
+        infants: number;
+    };
 }
 
 export default function FlightsPage() {
@@ -34,55 +102,104 @@ export default function FlightsPage() {
     )
 }
 
-import { useLanguage } from "@/context/language-context"
-
 function FlightsContent() {
     const searchParams = useSearchParams()
-    const { t } = useLanguage()
-    const [flights, setFlights] = useState<Flight[]>([])
-    const [availableAirlines, setAvailableAirlines] = useState<{ id: number; name: string }[]>([])
+    const { t, dir } = useLanguage()
+    const [flights, setFlights] = useState<FlightOffer[]>([])
+    const [availableAirlines, setAvailableAirlines] = useState<{ id: number; name: string; code: string }[]>([])
     const [loading, setLoading] = useState(true)
+    const [sortBy, setSortBy] = useState<'price' | 'duration' | 'departure'>('price')
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchFlights = async () => {
             setLoading(true)
+            setError(null)
+
             try {
+                const from = searchParams.get("from")
+                const to = searchParams.get("to")
+                const date = searchParams.get("date")
+                const tripType = searchParams.get("type") || "one-way"
+
+                if (!from || !to || !date) {
+                    setLoading(false)
+                    return
+                }
+
+                // Call the hybrid search endpoint (searches all suppliers including database)
                 const params = {
-                    from: searchParams.get("from"),
-                    to: searchParams.get("to"),
-                    date: searchParams.get("date"),
+                    from,
+                    to,
+                    date,
+                    return_date: searchParams.get("returnDate"),
+                    adults: searchParams.get("adults") || "1",
+                    children: searchParams.get("children") || "0",
+                    infants: searchParams.get("infants") || "0",
+                    cabin: searchParams.get("cabin") || "economy",
+                    trip_type: tripType === "round-trip" ? "roundTrip" : "oneWay",
+                    // Filters
                     min_price: searchParams.get("min_price"),
                     max_price: searchParams.get("max_price"),
-                    airline_id: searchParams.get("airline_id"),
+                    max_stops: searchParams.get("max_stops"),
                 }
-                const response = await api.get('/flights/search', { params })
-                const fetchedFlights = Array.isArray(response.data) ? response.data : response.data.data || []
-                setFlights(fetchedFlights)
 
-                // Only update available airlines if no airline filter is active
-                // This prevents the filter list from shrinking to only the selected airline
-                if (!searchParams.get("airline_id")) {
-                    const uniqueAirlinesMap = new Map();
-                    fetchedFlights.forEach((f: Flight) => {
-                        if (f.airline) {
-                            uniqueAirlinesMap.set(f.airline.id, { id: f.airline.id, name: f.airline.name });
+                const response = await api.get('/flights/search-external', { params })
+
+                if (response.data.status) {
+                    const fetchedFlights = response.data.data || []
+                    setFlights(fetchedFlights)
+
+                    // Extract unique airlines for filter
+                    const airlinesMap = new Map()
+                    fetchedFlights.forEach((offer: FlightOffer) => {
+                        if (offer.validating_airline) {
+                            airlinesMap.set(offer.validating_airline.id, {
+                                id: offer.validating_airline.id,
+                                name: offer.validating_airline.name,
+                                code: offer.validating_airline.code,
+                            })
                         }
-                    });
-                    setAvailableAirlines(Array.from(uniqueAirlinesMap.values()));
+                    })
+                    setAvailableAirlines(Array.from(airlinesMap.values()))
+                } else {
+                    setError(response.data.message || 'Failed to search flights')
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch flights", error)
+                setError(error.response?.data?.message || 'Failed to search flights. Please try again.')
             } finally {
                 setLoading(false)
             }
         }
 
-        if (searchParams.get("from")) {
+        if (searchParams.get("from") && searchParams.get("to") && searchParams.get("date")) {
             fetchFlights()
         } else {
             setLoading(false)
         }
     }, [searchParams])
+
+    // Sort flights
+    const sortedFlights = React.useMemo(() => {
+        const sorted = [...flights]
+        switch (sortBy) {
+            case 'price':
+                sorted.sort((a, b) => a.price.total - b.price.total)
+                break
+            case 'duration':
+                sorted.sort((a, b) => (a.legs[0]?.duration || 0) - (b.legs[0]?.duration || 0))
+                break
+            case 'departure':
+                sorted.sort((a, b) => {
+                    const aTime = a.legs[0]?.departure?.date_time || ''
+                    const bTime = b.legs[0]?.departure?.date_time || ''
+                    return aTime.localeCompare(bTime)
+                })
+                break
+        }
+        return sorted
+    }, [flights, sortBy])
 
     return (
         <PublicLayout>
@@ -111,15 +228,23 @@ function FlightsContent() {
                             <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.flights.title}</h2>
-                                    <p className="text-slate-500">{t.flights.showing_results} <span className="font-bold text-primary">{flights.length}</span> {t.flights.results}</p>
+                                    <p className="text-slate-500">
+                                        {t.flights.showing_results}{' '}
+                                        <span className="font-bold text-primary">{flights.length}</span>{' '}
+                                        {t.flights.results}
+                                    </p>
                                 </div>
 
                                 <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                     <span className="text-sm font-medium text-slate-500 pl-3">{t.flights.sort_by}:</span>
-                                    <select className="text-sm border-none bg-transparent font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8">
-                                        <option>{t.flights.cheapest}</option>
-                                        <option>{t.flights.fastest}</option>
-                                        <option>{t.flights.best_value}</option>
+                                    <select
+                                        className="text-sm border-none bg-transparent font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer py-1.5 pl-2 pr-8"
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as 'price' | 'duration' | 'departure')}
+                                    >
+                                        <option value="price">{t.flights.cheapest}</option>
+                                        <option value="duration">{t.flights.fastest}</option>
+                                        <option value="departure">{dir === 'rtl' ? 'وقت المغادرة' : 'Departure Time'}</option>
                                     </select>
                                 </div>
                             </div>
@@ -129,44 +254,81 @@ function FlightsContent() {
                                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 py-8">
                                         <AirplaneLoader text={t.loading.flights} />
                                     </div>
-                                ) : flights.length > 0 ? (
-                                    flights.map((flight) => (
-                                        <FlightCard
-                                            key={flight.id}
-                                            id={flight.id}
-                                            price={`$${flight.base_price}`}
-                                            stops={0}
-                                            totalDuration="2h 30m"
-                                            baggageAllowance={flight.default_baggage || 23}
-                                            cabinBaggage={flight.default_cabin_baggage || 7}
-                                            segments={[
-                                                {
-                                                    airline: flight.airline?.name || 'Airline',
-                                                    flightNumber: flight.flight_number,
-                                                    origin: flight.origin_airport?.code || 'ORG',
-                                                    destination: flight.destination_airport?.code || 'DST',
-                                                    departureTime: new Date(flight.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                                    arrivalTime: new Date(flight.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                                    duration: "2h 30m"
-                                                }
-                                            ]}
-                                        />
-                                    ))
+                                ) : error ? (
+                                    <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                                        <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <SlidersHorizontal className="w-10 h-10 text-red-500" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                                            {dir === 'rtl' ? 'حدث خطأ' : 'Something went wrong'}
+                                        </h3>
+                                        <p className="text-slate-500 max-w-md mx-auto">{error}</p>
+                                        <Button
+                                            variant="outline"
+                                            className="mt-6"
+                                            onClick={() => window.location.reload()}
+                                        >
+                                            {dir === 'rtl' ? 'حاول مرة أخرى' : 'Try Again'}
+                                        </Button>
+                                    </div>
+                                ) : sortedFlights.length > 0 ? (
+                                    sortedFlights.map((offer) => {
+                                        const firstLeg = offer.legs[0]
+                                        if (!firstLeg) return null
+
+                                        // Build segments for display
+                                        const segments = firstLeg.segments.map((seg) => ({
+                                            airline: seg.airline?.name || offer.validating_airline?.name || 'Airline',
+                                            airlineLogo: offer.validating_airline?.logo || undefined,
+                                            flightNumber: seg.flight_number,
+                                            origin: seg.departure.airport_code,
+                                            destination: seg.arrival.airport_code,
+                                            departureTime: seg.departure.time,
+                                            arrivalTime: seg.arrival.time,
+                                            duration: seg.duration_formatted || `${Math.floor(seg.duration / 60)}h ${seg.duration % 60}m`,
+                                        }))
+
+                                        // Get luggage from first segment
+                                        const luggage = firstLeg.segments[0]?.luggage
+                                        const baggageKg = luggage ? parseInt(luggage) || 23 : 23
+
+                                        return (
+                                            <FlightCard
+                                                key={offer.id}
+                                                id={offer.id}
+                                                price={offer.price.formatted}
+                                                stops={firstLeg.stops}
+                                                totalDuration={firstLeg.duration_formatted}
+                                                baggageAllowance={baggageKg}
+                                                cabinBaggage={7}
+                                                segments={segments}
+                                                refundable={offer.refundable}
+                                                seatsLeft={offer.seats_available}
+                                                supplierCode={offer.supplier_code}
+                                                referenceId={offer.reference_id}
+                                            />
+                                        )
+                                    })
                                 ) : (
                                     <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
                                         <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
                                             <SlidersHorizontal className="w-10 h-10 text-slate-400" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No flights found</h3>
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                                            {dir === 'rtl' ? 'لا توجد رحلات' : 'No flights found'}
+                                        </h3>
                                         <p className="text-slate-500 max-w-md mx-auto">
-                                            We couldn't find any flights matching your search criteria. Try adjusting your dates or filters.
+                                            {dir === 'rtl'
+                                                ? 'لم نتمكن من العثور على رحلات تطابق معايير البحث. حاول تعديل التواريخ أو الفلاتر.'
+                                                : "We couldn't find any flights matching your search criteria. Try adjusting your dates or filters."
+                                            }
                                         </p>
                                         <Button
                                             variant="outline"
                                             className="mt-6"
                                             onClick={() => window.location.href = '/'}
                                         >
-                                            Search Again
+                                            {dir === 'rtl' ? 'بحث مرة أخرى' : 'Search Again'}
                                         </Button>
                                     </div>
                                 )}
@@ -178,4 +340,3 @@ function FlightsContent() {
         </PublicLayout>
     )
 }
-

@@ -8,34 +8,16 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
-import api from "@/lib/api"
 
 interface Airline {
     id: number;
     name: string;
 }
 
-export function FilterSidebar({ availableAirlines }: { availableAirlines?: Airline[] }) {
+export function FilterSidebar({ availableAirlines = [] }: { availableAirlines?: Airline[] }) {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const [airlines, setAirlines] = React.useState<Airline[]>([])
     const [priceRange, setPriceRange] = React.useState([0, 2000])
-
-    React.useEffect(() => {
-        if (availableAirlines && availableAirlines.length > 0) {
-            setAirlines(availableAirlines)
-        } else {
-            const fetchAirlines = async () => {
-                try {
-                    const response = await api.get('/airlines')
-                    setAirlines(response.data.data || response.data)
-                } catch (error) {
-                    console.error("Failed to fetch airlines", error)
-                }
-            }
-            fetchAirlines()
-        }
-    }, [availableAirlines])
 
     const updateFilters = (key: string, value: string | null) => {
         const params = new URLSearchParams(searchParams.toString())
@@ -79,14 +61,18 @@ export function FilterSidebar({ availableAirlines }: { availableAirlines?: Airli
 
                 <FilterSection title="Airlines" defaultOpen={true}>
                     <div className="space-y-4">
-                        {airlines.map((airline) => (
-                            <CheckboxFilter
-                                key={airline.id}
-                                label={airline.name}
-                                checked={searchParams.get('airline_id') === airline.id.toString()}
-                                onCheckedChange={(checked) => updateFilters('airline_id', checked ? airline.id.toString() : null)}
-                            />
-                        ))}
+                        {availableAirlines.length > 0 ? (
+                            availableAirlines.map((airline) => (
+                                <CheckboxFilter
+                                    key={airline.id}
+                                    label={airline.name}
+                                    checked={searchParams.get('airline_code') === (airline as any).code}
+                                    onCheckedChange={(checked) => updateFilters('airline_code', checked ? (airline as any).code : null)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-sm text-slate-400">Search to see airlines</p>
+                        )}
                     </div>
                 </FilterSection>
             </div>

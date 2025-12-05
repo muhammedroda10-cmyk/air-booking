@@ -38,12 +38,22 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
      */
     protected function getHttpClient()
     {
-        return Http::timeout($this->config['timeout'] ?? 30)
+        $client = Http::timeout($this->config['timeout'] ?? 30)
             ->retry(
                 $this->config['retry_times'] ?? 3,
                 $this->config['retry_delay'] ?? 100
             )
             ->withHeaders($this->getDefaultHeaders());
+
+        // Disable SSL verification in local/development environment
+        // This is needed for Windows/Laragon setups that have certificate issues
+        if (app()->environment('local', 'development')) {
+            $client = $client->withOptions([
+                'verify' => false,
+            ]);
+        }
+
+        return $client;
     }
 
     /**
@@ -173,7 +183,7 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
 
         try {
             $result = $this->performConnectionTest();
-            $latency = (int)((microtime(true) - $start) * 1000);
+            $latency = (int) ((microtime(true) - $start) * 1000);
 
             if ($result['success']) {
                 $this->markHealthy();
@@ -187,7 +197,7 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
             return [
                 'success' => false,
                 'message' => 'Connection failed: ' . $e->getMessage(),
-                'latency_ms' => (int)((microtime(true) - $start) * 1000),
+                'latency_ms' => (int) ((microtime(true) - $start) * 1000),
             ];
         }
     }

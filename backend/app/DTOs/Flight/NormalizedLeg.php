@@ -13,7 +13,8 @@ class NormalizedLeg
         public readonly array $segments, // NormalizedSegment[]
         public readonly ?NormalizedAirline $airline = null,
         public readonly ?string $flightNumber = null,
-    ) {}
+    ) {
+    }
 
     public static function fromArray(array $data): self
     {
@@ -30,12 +31,12 @@ class NormalizedLeg
         $lastSegment = end($segments) ?: $firstSegment;
 
         return new self(
-            departure: isset($info['departure']) 
-                ? NormalizedLocation::fromArray($info['departure'])
-                : ($firstSegment?->departure ?? NormalizedLocation::fromArray([])),
+            departure: isset($info['departure'])
+            ? NormalizedLocation::fromArray($info['departure'])
+            : ($firstSegment?->departure ?? NormalizedLocation::fromArray([])),
             arrival: isset($info['arrival'])
-                ? NormalizedLocation::fromArray($info['arrival'])
-                : ($lastSegment?->arrival ?? NormalizedLocation::fromArray([])),
+            ? NormalizedLocation::fromArray($info['arrival'])
+            : ($lastSegment?->arrival ?? NormalizedLocation::fromArray([])),
             duration: self::parseDuration($info['duration'] ?? '0:0'),
             stops: $info['connections'] ?? (count($segments) - 1),
             cabin: self::normalizeCabin($info['cabin'] ?? 'Economy'),
@@ -49,24 +50,20 @@ class NormalizedLeg
     {
         if (str_contains($duration, ':')) {
             $parts = explode(':', $duration);
-            $hours = (int)($parts[0] ?? 0);
-            $minutes = (int)($parts[1] ?? 0);
-            
-            if ($hours > 24) {
-                return $hours;
-            }
-            
+            $hours = (int) ($parts[0] ?? 0);
+            $minutes = (int) ($parts[1] ?? 0);
+
             return ($hours * 60) + $minutes;
         }
-        
-        return (int)$duration;
+
+        return (int) $duration;
     }
 
     private static function normalizeCabin(string $cabin): string
     {
         $cabin = strtolower(trim($cabin));
-        
-        return match($cabin) {
+
+        return match ($cabin) {
             'economy', 'y' => 'Economy',
             'premium economy', 'premium_economy', 'w' => 'Premium Economy',
             'business', 'c', 'j' => 'Business',
@@ -94,7 +91,7 @@ class NormalizedLeg
     {
         $hours = floor($this->duration / 60);
         $minutes = $this->duration % 60;
-        
+
         if ($hours > 0 && $minutes > 0) {
             return "{$hours}h {$minutes}m";
         } elseif ($hours > 0) {

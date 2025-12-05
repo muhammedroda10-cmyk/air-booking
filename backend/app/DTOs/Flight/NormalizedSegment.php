@@ -17,7 +17,8 @@ class NormalizedSegment
         public readonly ?string $bookingClass = null,
         public readonly ?string $fareBasis = null,
         public readonly int $capacity = 0,
-    ) {}
+    ) {
+    }
 
     public static function fromArray(array $data): self
     {
@@ -25,9 +26,9 @@ class NormalizedSegment
             departure: NormalizedLocation::fromArray($data['departure'] ?? []),
             arrival: NormalizedLocation::fromArray($data['arrival'] ?? []),
             airline: NormalizedAirline::fromArray($data['airline'] ?? []),
-            operatingAirline: isset($data['operatingAirline']) 
-                ? NormalizedAirline::fromArray($data['operatingAirline']) 
-                : null,
+            operatingAirline: isset($data['operatingAirline'])
+            ? NormalizedAirline::fromArray($data['operatingAirline'])
+            : null,
             flightNumber: $data['flight_number'] ?? '',
             cabin: self::normalizeCabin($data['cabin'] ?? 'Economy'),
             duration: self::parseDuration($data['duration'] ?? '0:0'),
@@ -41,24 +42,19 @@ class NormalizedSegment
 
     /**
      * Parse duration string to minutes.
-     * Handles formats like "3:30" (3h 30m) or "195:0" (195h 0m which is likely wrong)
+     * Handles formats like "3:30" (3h 30m) or "28:10" (28h 10m)
      */
     private static function parseDuration(string $duration): int
     {
         if (str_contains($duration, ':')) {
             $parts = explode(':', $duration);
-            $hours = (int)($parts[0] ?? 0);
-            $minutes = (int)($parts[1] ?? 0);
-            
-            // If hours is unreasonably high (>24), it might be total minutes
-            if ($hours > 24) {
-                return $hours; // Assume it's already in minutes
-            }
-            
+            $hours = (int) ($parts[0] ?? 0);
+            $minutes = (int) ($parts[1] ?? 0);
+
             return ($hours * 60) + $minutes;
         }
-        
-        return (int)$duration;
+
+        return (int) $duration;
     }
 
     /**
@@ -67,8 +63,8 @@ class NormalizedSegment
     private static function normalizeCabin(string $cabin): string
     {
         $cabin = strtolower(trim($cabin));
-        
-        return match($cabin) {
+
+        return match ($cabin) {
             'economy', 'y' => 'Economy',
             'premium economy', 'premium_economy', 'w' => 'Premium Economy',
             'business', 'c', 'j' => 'Business',
@@ -82,12 +78,13 @@ class NormalizedSegment
      */
     private static function normalizeLuggage(?string $luggage): ?string
     {
-        if (!$luggage) return null;
-        
+        if (!$luggage)
+            return null;
+
         // Clean up format like "30 KG/ADT " -> "30 KG"
         $luggage = trim($luggage);
         $luggage = preg_replace('/\/[A-Z]+\s*$/', '', $luggage);
-        
+
         return trim($luggage) ?: null;
     }
 
@@ -114,7 +111,7 @@ class NormalizedSegment
     {
         $hours = floor($this->duration / 60);
         $minutes = $this->duration % 60;
-        
+
         if ($hours > 0 && $minutes > 0) {
             return "{$hours}h {$minutes}m";
         } elseif ($hours > 0) {
