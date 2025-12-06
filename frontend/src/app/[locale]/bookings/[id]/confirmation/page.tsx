@@ -144,27 +144,41 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                                     <Plane className="w-6 h-6 text-slate-600 dark:text-slate-400 print:text-slate-900" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{booking.flight.airline.name}</h3>
-                                                    <p className="text-slate-500 text-sm">Flight {booking.flight.flight_number}</p>
+                                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                                                        {booking.flight?.airline?.name || booking.flight_details?.airline || 'Flight Booking'}
+                                                    </h3>
+                                                    <p className="text-slate-500 text-sm">
+                                                        Flight {booking.flight?.flight_number || booking.flight_details?.flight_number || booking.pnr}
+                                                    </p>
                                                 </div>
                                             </div>
 
                                             <div className="flex flex-col sm:flex-row justify-between gap-8">
                                                 <div>
                                                     <p className="text-sm text-slate-500 mb-1">From</p>
-                                                    <p className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{booking.flight.origin_airport.code}</p>
-                                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{booking.flight.origin_airport.city}</p>
+                                                    <p className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                                                        {booking.flight?.origin_airport?.code || booking.flight_details?.origin || 'DEP'}
+                                                    </p>
+                                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                        {booking.flight?.origin_airport?.city || booking.flight_details?.origin_city || ''}
+                                                    </p>
                                                 </div>
                                                 <div className="flex-1 flex flex-col items-center justify-center">
                                                     <div className="w-full h-px bg-slate-200 dark:bg-slate-700 relative print:bg-slate-300">
                                                         <Plane className="w-4 h-4 text-slate-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-90 bg-white dark:bg-slate-900 px-0.5 print:text-slate-600" />
                                                     </div>
-                                                    <p className="text-xs text-slate-400 mt-2">Duration: 2h 30m</p>
+                                                    <p className="text-xs text-slate-400 mt-2">
+                                                        Duration: {booking.flight_details?.duration || '—'}
+                                                    </p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm text-slate-500 mb-1">To</p>
-                                                    <p className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{booking.flight.destination_airport.code}</p>
-                                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{booking.flight.destination_airport.city}</p>
+                                                    <p className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+                                                        {booking.flight?.destination_airport?.code || booking.flight_details?.destination || 'ARR'}
+                                                    </p>
+                                                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                        {booking.flight?.destination_airport?.city || booking.flight_details?.destination_city || ''}
+                                                    </p>
                                                 </div>
                                             </div>
 
@@ -175,7 +189,9 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                                         <span className="text-xs font-medium uppercase tracking-wider">Date</span>
                                                     </div>
                                                     <p className="font-semibold text-slate-900 dark:text-white">
-                                                        {new Date(booking.flight.departure_time).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                        {booking.flight?.departure_time || booking.flight_details?.departure_time
+                                                            ? new Date(booking.flight?.departure_time || booking.flight_details?.departure_time).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+                                                            : 'TBD'}
                                                     </p>
                                                 </div>
                                                 <div>
@@ -184,7 +200,9 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                                         <span className="text-xs font-medium uppercase tracking-wider">Time</span>
                                                     </div>
                                                     <p className="font-semibold text-slate-900 dark:text-white">
-                                                        {new Date(booking.flight.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {booking.flight?.departure_time || booking.flight_details?.departure_time
+                                                            ? new Date(booking.flight?.departure_time || booking.flight_details?.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            : 'TBD'}
                                                     </p>
                                                 </div>
                                             </div>

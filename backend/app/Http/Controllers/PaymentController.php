@@ -34,12 +34,15 @@ class PaymentController extends Controller
         $amount = (float) $booking->total_price;
 
         try {
+            \Log::info("Payment Request for Booking #{$booking->id}, Method: {$request->payment_method}");
+
             if ($request->payment_method === 'wallet') {
                 return $this->processWalletPayment($request->user(), $booking, $amount);
             } else {
                 return $this->processCardPayment($request->user(), $booking, $amount, $request->payment_method);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \Log::error("Payment Processing Error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'message' => 'Payment failed: ' . $e->getMessage()
             ], 400);
@@ -68,6 +71,8 @@ class PaymentController extends Controller
         $transactionId = 'WLT_' . strtoupper(uniqid());
 
         DB::transaction(function () use ($wallet, $booking, $amount, $transactionId) {
+            \Log::info("Processing wallet payment for Booking #{$booking->id}. isExternal: " . ($booking->isExternal() ? 'true' : 'false') . ", Supplier: {$booking->supplier_code}, FlightID: {$booking->flight_id}");
+
             // Deduct from wallet
             $wallet->decrement('balance', $amount);
 
@@ -78,6 +83,11 @@ class PaymentController extends Controller
                 'description' => "Payment for booking #{$booking->pnr}",
                 'reference' => $transactionId,
             ]);
+
+            // Handle External Supplier Booking
+            if ($booking->isExternal()) {
+                $this->confirmExternalBooking($booking);
+            }
 
             // Update booking
             $booking->update([
@@ -114,6 +124,11 @@ class PaymentController extends Controller
         // For now, we simulate successful payment
 
         DB::transaction(function () use ($user, $booking, $amount, $transactionId) {
+            // Handle External Supplier Booking
+            if ($booking->isExternal()) {
+                $this->confirmExternalBooking($booking);
+            }
+
             // Update booking
             $booking->update([
                 'payment_status' => 'paid',
@@ -129,7 +144,7 @@ class PaymentController extends Controller
 
             $wallet->transactions()->create([
                 'amount' => $amount,
-                'type' => 'payment', // Different type for card payments
+                'type' => 'credit', // Using 'credit' to match DB check constraint
                 'description' => "Card payment for booking #{$booking->pnr}",
                 'reference' => $transactionId,
             ]);
@@ -147,6 +162,39 @@ class PaymentController extends Controller
                 'flight.destinationAirport'
             ),
         ]);
+    }
+
+    /**
+     * Confirm booking with external supplier.
+     */
+    private function confirmExternalBooking(Booking $booking)
+    {
+        try {
+            $supplier = app(\App\Services\FlightSupplierManager::class)->driver($booking->supplier_code);
+
+            // Re-fetch offer to verify availability and get current state
+            $offer = $supplier->getOfferDetails($booking->external_offer_id);
+
+            if (!$offer) {
+                throw new \Exception('Flight offer is no longer available.');
+            }
+
+            // Basic price check (allow small variance for currency float issues)
+            if (abs($offer->price->total - $booking->total_price) > 1.00) {
+                // In a real app we might ask user to re-confirm new price
+                throw new \Exception("Price has changed from {$booking->total_price} to {$offer->price->total}. Please re-book.");
+            }
+
+            $bookingResult = $supplier->book($offer, $booking->passengers->toArray());
+
+            $booking->pnr = $bookingResult['pnr'];
+            $booking->external_order_id = $bookingResult['order_id'];
+
+        } catch (\Exception $e) {
+            \Log::error("External booking confirmation failed: " . $e->getMessage());
+            // Throwing exception here will rollback the DB transaction
+            throw new \Exception('Supplier Booking Failed: ' . $e->getMessage());
+        }
     }
 
     /**

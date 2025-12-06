@@ -175,6 +175,14 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
     }
 
     /**
+     * Create a booking with the supplier.
+     */
+    public function book(NormalizedFlightOffer $offer, array $passengers): array
+    {
+        throw new \BadMethodCallException('Booking is not implemented for this supplier (' . $this->getSupplierCode() . ').');
+    }
+
+    /**
      * Test connection to supplier API.
      */
     public function testConnection(): array

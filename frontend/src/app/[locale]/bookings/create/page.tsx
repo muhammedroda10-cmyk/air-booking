@@ -34,6 +34,8 @@ interface Passenger {
     passport_number: string;
     passport_expiry: string;
     seat_number: string;
+    email: string;
+    phone_number: string;
 }
 
 function BookingForm() {
@@ -75,7 +77,9 @@ function BookingForm() {
             date_of_birth: '',
             passport_number: '',
             passport_expiry: '',
-            seat_number: ''
+            seat_number: '',
+            email: '',
+            phone_number: ''
         }));
         setPassengers(initialPassengers);
     }, [totalPassengerCount]);
@@ -151,7 +155,9 @@ function BookingForm() {
                 date_of_birth: p.date_of_birth || null,
                 passport_number: p.passport_number || null,
                 passport_expiry: p.passport_expiry || null,
-                seat_number: selectedSeats[index] || null
+                seat_number: selectedSeats[index] || null,
+                email: p.email || null,
+                phone_number: p.phone_number || null
             }));
 
             const response = await api.post('/bookings', {
@@ -160,9 +166,10 @@ function BookingForm() {
                 passengers: passengersPayload,
             });
 
-            setBookingId(response.data.id);
-            setBookingComplete(true);
-            setCurrentStep(3);
+            const newBookingId = response.data.booking?.id || response.data.id;
+
+            // Redirect directly to payment page instead of showing confirmation
+            router.push(`/bookings/${newBookingId}/pay`);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to create booking');
         }
@@ -354,6 +361,35 @@ function BookingForm() {
                                                                         />
                                                                     </div>
                                                                 </div>
+                                                                {/* Email and Phone for first passenger (contact) */}
+                                                                {index === 0 && (
+                                                                    <>
+                                                                        <div className="space-y-2">
+                                                                            <Label htmlFor="email" className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Email *</Label>
+                                                                            <Input
+                                                                                id="email"
+                                                                                type="email"
+                                                                                placeholder="e.g. john@example.com"
+                                                                                className="h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-primary/20 rounded-xl transition-all"
+                                                                                required
+                                                                                value={passenger.email}
+                                                                                onChange={(e) => handlePassengerChange(index, 'email', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        <div className="space-y-2">
+                                                                            <Label htmlFor="phone" className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Phone *</Label>
+                                                                            <Input
+                                                                                id="phone"
+                                                                                type="tel"
+                                                                                placeholder="e.g. +1 555 123 4567"
+                                                                                className="h-11 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-primary/20 rounded-xl transition-all"
+                                                                                required
+                                                                                value={passenger.phone_number}
+                                                                                onChange={(e) => handlePassengerChange(index, 'phone_number', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </motion.div>
                                                     ))}

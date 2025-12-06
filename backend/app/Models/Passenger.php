@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 class Passenger extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'booking_id',
         'name',
@@ -25,6 +25,8 @@ class Passenger extends Model
         'special_requests',
         'seat_number',
         'ticket_number',
+        'email',
+        'phone_number',
     ];
 
     protected $casts = [
@@ -41,7 +43,7 @@ class Passenger extends Model
             if (!$passenger->ticket_number) {
                 $passenger->ticket_number = strtoupper(Str::random(3)) . '-' . rand(100000, 999999);
             }
-            
+
             // Split name into first/last if not set
             if (!$passenger->first_name && $passenger->name) {
                 $parts = explode(' ', $passenger->name, 2);

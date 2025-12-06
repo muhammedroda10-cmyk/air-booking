@@ -46,6 +46,15 @@ return [
             'retry_delay' => 100, // milliseconds
         ],
 
+        'duffel' => [
+            'driver' => 'duffel',
+            'base_url' => env('DUFFEL_API_URL', 'https://api.duffel.com'),
+            'api_key' => env('DUFFEL_ACCESS_TOKEN'),
+            'timeout' => 30,
+            'retry_times' => 2,
+            'retry_delay' => 200, // milliseconds
+        ],
+
         // Future suppliers can be added here
         // 'amadeus' => [
         //     'driver' => 'amadeus',

@@ -11,10 +11,40 @@ class FlightPackageController extends Controller
     /**
      * Get packages for a specific flight
      */
-    public function index(Flight $flight)
+    /**
+     * Get packages for a specific flight
+     */
+    public function index($flightId, \App\Services\FlightSupplierManager $supplierManager)
+    {
+        // Handle local database flight
+        if (is_numeric($flightId)) {
+            $flight = Flight::with(['airline', 'originAirport', 'destinationAirport'])->findOrFail($flightId);
+            return $this->getLocalFlightPackages($flight);
+        }
+
+        // Handle external supplier flight
+        if (str_contains($flightId, '_')) {
+            [$supplierCode, $refId] = explode('_', $flightId, 2);
+
+            try {
+                $supplier = $supplierManager->driver($supplierCode);
+                $offer = $supplier->getOfferDetails($refId);
+
+                if ($offer) {
+                    return $this->getExternalFlightPackages($offer);
+                }
+            } catch (\Throwable $e) {
+                \Log::error("Failed to fetch external flight packages: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            }
+        }
+
+        return response()->json(['message' => 'Flight not found'], 404);
+    }
+
+    private function getLocalFlightPackages(Flight $flight)
     {
         $packages = $flight->packages()->get();
-        
+
         // If no packages exist, return default packages
         if ($packages->isEmpty()) {
             $packages = $this->getDefaultPackages($flight);
@@ -36,6 +66,41 @@ class FlightPackageController extends Controller
         ]);
     }
 
+    private function getExternalFlightPackages(\App\DTOs\Flight\NormalizedFlightOffer $offer)
+    {
+        $basePrice = $offer->price->baseFare > 0 ? $offer->price->baseFare : $offer->price->total;
+        $packages = $this->generateDefaultPackages($basePrice, $offer->id);
+
+        $firstLeg = $offer->legs[0];
+
+        return response()->json([
+            'flight' => [
+                'id' => $offer->id,
+                'flight_number' => $firstLeg->flightNumber,
+                'airline' => [
+                    'name' => $offer->validatingAirline->name,
+                    'code' => $offer->validatingAirline->code,
+                    'logo' => $offer->validatingAirline->logo,
+                ],
+                'origin_airport' => [
+                    'name' => $firstLeg->departure->airportName,
+                    'code' => $firstLeg->departure->airportCode,
+                    'city' => $firstLeg->departure->city,
+                ],
+                'destination_airport' => [
+                    'name' => $firstLeg->arrival->airportName,
+                    'code' => $firstLeg->arrival->airportCode,
+                    'city' => $firstLeg->arrival->city,
+                ],
+                'departure_time' => $firstLeg->departure->dateTime,
+                'arrival_time' => $firstLeg->arrival->dateTime,
+                'base_price' => $basePrice,
+                'default_baggage' => 23,
+            ],
+            'packages' => $packages
+        ]);
+    }
+
     /**
      * Get a specific package
      */
@@ -50,14 +115,23 @@ class FlightPackageController extends Controller
     /**
      * Generate default packages for flights without configured packages
      */
+    /**
+     * Generate default packages for specific flight
+     */
     private function getDefaultPackages(Flight $flight)
     {
-        $basePrice = $flight->base_price;
+        return $this->generateDefaultPackages($flight->base_price, $flight->id);
+    }
 
+    /**
+     * Generate default packages based on price
+     */
+    private function generateDefaultPackages($basePrice, $flightId)
+    {
         return collect([
             [
                 'id' => 'economy',
-                'flight_id' => $flight->id,
+                'flight_id' => $flightId,
                 'name' => 'economy',
                 'display_name' => 'Economy',
                 'baggage_allowance' => 23,
@@ -82,7 +156,7 @@ class FlightPackageController extends Controller
             ],
             [
                 'id' => 'premium_economy',
-                'flight_id' => $flight->id,
+                'flight_id' => $flightId,
                 'name' => 'premium_economy',
                 'display_name' => 'Premium Economy',
                 'baggage_allowance' => 30,
@@ -107,7 +181,7 @@ class FlightPackageController extends Controller
             ],
             [
                 'id' => 'business',
-                'flight_id' => $flight->id,
+                'flight_id' => $flightId,
                 'name' => 'business',
                 'display_name' => 'Business Class',
                 'baggage_allowance' => 40,

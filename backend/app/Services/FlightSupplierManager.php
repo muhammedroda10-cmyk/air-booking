@@ -6,6 +6,7 @@ use App\Contracts\FlightSupplierInterface;
 use App\Models\Supplier;
 use App\Services\Suppliers\FlightBufferSupplier;
 use App\Services\Suppliers\DatabaseSupplier;
+use App\Services\Suppliers\DuffelSupplier;
 use InvalidArgumentException;
 
 class FlightSupplierManager
@@ -26,6 +27,7 @@ class FlightSupplierManager
     protected array $drivers = [
         'database' => DatabaseSupplier::class,
         'flightbuffer' => FlightBufferSupplier::class,
+        'duffel' => DuffelSupplier::class,
         // Add more drivers here as they are implemented
         // 'amadeus' => AmadeusSupplier::class,
         // 'sabre' => SabreSupplier::class,

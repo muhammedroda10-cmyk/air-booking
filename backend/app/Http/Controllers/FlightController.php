@@ -12,7 +12,8 @@ class FlightController extends Controller
 {
     public function __construct(
         protected ?FlightSearchService $flightSearchService = null
-    ) {}
+    ) {
+    }
 
     public function index()
     {
@@ -38,9 +39,77 @@ class FlightController extends Controller
         return $flight->load(['airline', 'originAirport', 'destinationAirport']);
     }
 
-    public function show(Flight $flight)
+    public function show($id)
     {
-        return $flight->load(['airline', 'originAirport', 'destinationAirport']);
+        if (is_numeric($id)) {
+            $flight = Flight::with(['airline', 'originAirport', 'destinationAirport'])->find($id);
+
+            if (!$flight) {
+                return response()->json(['message' => 'Flight not found'], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'data' => $flight
+            ]);
+        }
+
+        // Handle external flight ID
+        if (str_contains($id, '_')) {
+            try {
+                // Format: supplier_offerId
+                $parts = explode('_', $id, 2);
+                if (count($parts) !== 2) {
+                    return response()->json(['message' => 'Invalid flight ID format'], 400);
+                }
+
+                [$supplierCode, $externalId] = $parts;
+
+                $flightSearchService = app(FlightSearchService::class);
+                $offer = $flightSearchService->getOfferDetails($supplierCode, $externalId);
+
+                if ($offer) {
+                    // Map NormalizedFlightOffer to Flight model structure for frontend compatibility
+                    $mappedFlight = [
+                        'id' => $id,
+                        'flight_number' => $offer->legs[0]->segments[0]->flightNumber ?? 'N/A',
+                        'departure_time' => $offer->legs[0]->departure->dateTime,
+                        'arrival_time' => $offer->legs[0]->arrival->dateTime,
+                        'base_price' => $offer->price->total,
+                        'airline' => [
+                            'name' => $offer->validatingAirline->name,
+                            'iata_code' => $offer->validatingAirline->code,
+                            'logo_url' => $offer->validatingAirline->logo,
+                        ],
+                        'originAirport' => [
+                            'code' => $offer->legs[0]->departure->airportCode,
+                            'name' => $offer->legs[0]->departure->airportName,
+                            'city' => $offer->legs[0]->departure->city,
+                        ],
+                        'destinationAirport' => [
+                            'code' => $offer->legs[0]->arrival->airportCode,
+                            'name' => $offer->legs[0]->arrival->airportName,
+                            'city' => $offer->legs[0]->arrival->city,
+                        ],
+                        'duration_minutes' => $offer->legs[0]->duration, // assuming duration in minutes
+                        'price' => $offer->price->total,
+                        'currency' => $offer->price->currency,
+                        'is_external' => true,
+                        'supplier_code' => $supplierCode,
+                    ];
+
+                    return response()->json([
+                        'status' => true,
+                        'data' => $mappedFlight
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to fetch external flight details: " . $e->getMessage());
+                return response()->json(['message' => 'Error fetching external flight details'], 500);
+            }
+        }
+
+        return response()->json(['message' => 'Flight not found'], 404);
     }
 
     public function update(Request $request, Flight $flight)

@@ -46,6 +46,15 @@ interface FlightSupplierInterface
     public function getName(): string;
 
     /**
+     * Create a booking with the supplier.
+     * 
+     * @param NormalizedFlightOffer $offer The flight offer to book
+     * @param array $passengers Array of passenger details
+     * @return array{pnr: string, order_id: string, ticket_number?: string, status: string}
+     */
+    public function book(NormalizedFlightOffer $offer, array $passengers): array;
+
+    /**
      * Test the connection to the supplier API.
      *
      * @return array{success: bool, message: string, latency_ms?: int}
