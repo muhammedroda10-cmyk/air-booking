@@ -27,13 +27,24 @@ interface Booking {
     status: string;
     created_at: string;
     total_price: number;
-    flight: {
+    flight?: {
         flight_number: string;
         departure_time: string;
         arrival_time: string;
         airline: { name: string };
         origin_airport: { code: string; city: string };
         destination_airport: { code: string; city: string };
+    };
+    flight_details?: {
+        airline?: string;
+        flight_number?: string;
+        origin?: string;
+        destination?: string;
+        origin_city?: string;
+        destination_city?: string;
+        departure_datetime?: string;
+        departure_time?: string;
+        duration?: string;
     };
 }
 
@@ -46,9 +57,20 @@ export default function TripsPage() {
     const fetchBookings = async () => {
         try {
             const response = await api.get('/bookings');
-            const upcoming = response.data.filter((b: Booking) =>
-                b.flight && new Date(b.flight.departure_time) > new Date() && b.status !== 'cancelled'
-            );
+            // Include both local flights (with future departure) and external bookings
+            const upcoming = response.data.filter((b: Booking) => {
+                if (b.status === 'cancelled') return false;
+                // For local flights, check departure time
+                if (b.flight?.departure_time) {
+                    return new Date(b.flight.departure_time) > new Date();
+                }
+                // For external bookings, check flight_details datetime
+                if (b.flight_details?.departure_datetime) {
+                    return new Date(b.flight_details.departure_datetime) > new Date();
+                }
+                // Include external bookings without date info (can't determine if past)
+                return b.flight_details !== undefined;
+            });
             setBookings(upcoming);
         } catch (error) {
             console.error("Failed to fetch bookings", error);
@@ -108,8 +130,8 @@ export default function TripsPage() {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${booking.status === 'confirmed'
-                                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                                     }`}>
                                                     {booking.status}
                                                 </span>
@@ -118,8 +140,12 @@ export default function TripsPage() {
 
                                             <div className="flex items-center gap-6 mb-3">
                                                 <div>
-                                                    <p className="text-xl font-bold">{booking.flight.origin_airport.code}</p>
-                                                    <p className="text-xs text-muted-foreground">{booking.flight.origin_airport.city}</p>
+                                                    <p className="text-xl font-bold">
+                                                        {booking.flight?.origin_airport?.code || booking.flight_details?.origin || '—'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {booking.flight?.origin_airport?.city || booking.flight_details?.origin_city || ''}
+                                                    </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-px bg-slate-300 dark:bg-slate-700" />
@@ -127,18 +153,34 @@ export default function TripsPage() {
                                                     <div className="w-8 h-px bg-slate-300 dark:bg-slate-700" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xl font-bold">{booking.flight.destination_airport.code}</p>
-                                                    <p className="text-xs text-muted-foreground">{booking.flight.destination_airport.city}</p>
+                                                    <p className="text-xl font-bold">
+                                                        {booking.flight?.destination_airport?.code || booking.flight_details?.destination || '—'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {booking.flight?.destination_airport?.city || booking.flight_details?.destination_city || ''}
+                                                    </p>
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-4 text-sm text-muted-foreground">
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar className="w-3.5 h-3.5" />
-                                                    <span>{new Date(booking.flight.departure_time).toLocaleDateString()}</span>
+                                                    <span>
+                                                        {(() => {
+                                                            const dt = booking.flight?.departure_time || booking.flight_details?.departure_datetime;
+                                                            if (!dt) return 'TBD';
+                                                            try {
+                                                                const d = new Date(dt);
+                                                                if (isNaN(d.getTime())) return 'TBD';
+                                                                return d.toLocaleDateString();
+                                                            } catch { return 'TBD'; }
+                                                        })()}
+                                                    </span>
                                                 </div>
                                                 <span>•</span>
-                                                <span>{booking.flight.airline.name} {booking.flight.flight_number}</span>
+                                                <span>
+                                                    {booking.flight?.airline?.name || booking.flight_details?.airline || 'Flight'} {booking.flight?.flight_number || booking.flight_details?.flight_number || booking.pnr}
+                                                </span>
                                             </div>
                                         </div>
 
@@ -162,7 +204,7 @@ export default function TripsPage() {
                                                             </AlertDialogTitle>
                                                             <AlertDialogDescription>
                                                                 Are you sure you want to cancel your booking to{' '}
-                                                                <strong>{booking.flight.destination_airport.city}</strong>?
+                                                                <strong>{booking.flight?.destination_airport?.city || booking.flight_details?.destination_city || 'your destination'}</strong>?
                                                                 <br /><br />
                                                                 Amount of <strong>${booking.total_price}</strong> will be refunded to your wallet.
                                                             </AlertDialogDescription>

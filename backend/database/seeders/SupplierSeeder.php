@@ -33,15 +33,41 @@ class SupplierSeeder extends Seeder
             ]
         );
 
-        // Add more suppliers as needed (inactive by default)
-        // Supplier::updateOrCreate(
-        //     ['code' => 'amadeus'],
-        //     [
-        //         'name' => 'Amadeus',
-        //         'driver' => 'amadeus',
-        //         'is_active' => false,
-        //         'priority' => 90,
-        //     ]
-        // );
+        // Duffel supplier
+        Supplier::updateOrCreate(
+            ['code' => 'duffel'],
+            [
+                'name' => 'Duffel',
+                'driver' => 'duffel',
+                'api_base_url' => config('suppliers.suppliers.duffel.base_url', 'https://api.duffel.com'),
+                'api_key' => config('suppliers.suppliers.duffel.api_key'),
+                'is_active' => true,
+                'priority' => 90,
+                'timeout' => 30,
+                'retry_times' => 2,
+                'config' => [
+                    'test_mode' => env('DUFFEL_TEST_MODE', true),
+                    'default_cabin' => 'economy',
+                ],
+            ]
+        );
+
+        // Database supplier (local flights from database)
+        Supplier::updateOrCreate(
+            ['code' => 'database'],
+            [
+                'name' => 'Local Database',
+                'driver' => 'database',
+                'api_base_url' => null,
+                'api_key' => null,
+                'is_active' => true,
+                'priority' => 80,
+                'timeout' => 10,
+                'retry_times' => 0,
+                'config' => [
+                    'description' => 'Local flight inventory from database',
+                ],
+            ]
+        );
     }
 }

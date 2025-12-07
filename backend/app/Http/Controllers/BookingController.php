@@ -32,7 +32,7 @@ class BookingController extends Controller
 
             // For external bookings without flight relation
             if ($booking->isExternal()) {
-                $booking->flight_details = $booking->external_booking_data['flight'] ?? null;
+                $booking->flight_details = $booking->external_booking_data;
                 $booking->can_review = false; // External bookings can't be reviewed in our system
             } else if ($booking->flight) {
                 $booking->can_review = $booking->status === 'confirmed' &&
@@ -269,7 +269,7 @@ class BookingController extends Controller
 
         // For external bookings, include flight details from external_booking_data
         if ($booking->isExternal() && !$booking->flight_id) {
-            $booking->flight_details = $booking->external_booking_data['flight'] ?? null;
+            $booking->flight_details = $booking->external_booking_data;
         }
 
         return response()->json($booking);

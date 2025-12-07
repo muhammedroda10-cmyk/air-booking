@@ -21,7 +21,8 @@ class NormalizedFlightOffer
         public readonly ?string $sellerCode = null,
         public readonly bool $hasBrands = false,
         public readonly bool $onholdable = false,
-    ) {}
+    ) {
+    }
 
     public static function fromFlightBufferData(array $data, string $supplierCode = 'flightbuffer'): self
     {
@@ -66,7 +67,7 @@ class NormalizedFlightOffer
     private static function extractSeatsAvailable(array $legs): int
     {
         $minSeats = PHP_INT_MAX;
-        
+
         foreach ($legs as $leg) {
             foreach ($leg->segments as $segment) {
                 if ($segment->capacity > 0 && $segment->capacity < $minSeats) {
@@ -74,7 +75,7 @@ class NormalizedFlightOffer
                 }
             }
         }
-        
+
         return $minSeats === PHP_INT_MAX ? 0 : $minSeats;
     }
 
@@ -112,19 +113,42 @@ class NormalizedFlightOffer
     public function getSummary(): array
     {
         $firstLeg = $this->legs[0] ?? null;
-        
+        $segments = $firstLeg?->segments ?? [];
+        $firstSegment = $segments[0] ?? null;
+        $lastSegment = !empty($segments) ? $segments[count($segments) - 1] : $firstSegment;
+
         return [
             'id' => $this->id,
             'price' => $this->price->toArray()['formatted'],
             'airline' => $this->validatingAirline->name,
             'airline_code' => $this->validatingAirline->code,
+            // Origin details
+            'origin' => $firstLeg?->departure->airportCode,
+            'origin_city' => $firstLeg?->departure->city,
+            'origin_airport' => $firstLeg?->departure->airportName,
+            'departure_terminal' => $firstLeg?->departure->terminal,
+            // Destination details
+            'destination' => $firstLeg?->arrival->airportCode,
+            'destination_city' => $firstLeg?->arrival->city,
+            'destination_airport' => $firstLeg?->arrival->airportName,
+            'arrival_terminal' => $firstLeg?->arrival->terminal,
+            // Full datetime (ISO format for proper parsing)
+            'departure_datetime' => $firstLeg?->departure->dateTime?->toIso8601String(),
+            'arrival_datetime' => $firstLeg?->arrival->dateTime?->toIso8601String(),
+            // Legacy fields for backward compatibility
             'departure' => $firstLeg?->departure->city,
             'arrival' => $firstLeg?->arrival->city,
             'departure_time' => $firstLeg?->departure->time,
             'arrival_time' => $firstLeg?->arrival->time,
+            // Flight details
+            'flight_number' => $firstSegment?->flightNumber,
             'duration' => $firstLeg?->formatDuration(),
             'stops' => $firstLeg?->stops ?? 0,
             'cabin' => $firstLeg?->cabin,
+            // Aircraft and baggage (new fields)
+            'aircraft' => $firstSegment?->aircraft,
+            'luggage' => $firstSegment?->luggage,
+            'booking_class' => $firstSegment?->bookingClass,
         ];
     }
 }

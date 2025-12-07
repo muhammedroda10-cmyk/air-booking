@@ -64,8 +64,10 @@ export default function AdminDashboard() {
                             {stats.recent_bookings?.map((booking: any) => (
                                 <div key={booking.id} className="flex items-center justify-between border-b pb-2 last:border-0">
                                     <div>
-                                        <p className="font-medium">{booking.user.name}</p>
-                                        <p className="text-sm text-muted-foreground">{booking.flight.airline.name} • {booking.pnr}</p>
+                                        <p className="font-medium">{booking.user?.name || 'Guest'}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {booking.flight?.airline?.name || booking.flight_details?.airline || 'External Airline'} • {booking.pnr}
+                                        </p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold">${booking.total_price}</p>

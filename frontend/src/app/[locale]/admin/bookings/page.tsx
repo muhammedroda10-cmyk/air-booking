@@ -36,7 +36,7 @@ interface Booking {
         name: string
         email: string
     }
-    flight: {
+    flight?: {
         flight_number: string
         airline: {
             name: string
@@ -49,6 +49,14 @@ interface Booking {
             code: string
             city: string
         }
+    }
+    flight_details?: {
+        airline?: string
+        flight_number?: string
+        origin?: string
+        destination?: string
+        origin_city?: string
+        destination_city?: string
     }
 }
 
@@ -220,9 +228,11 @@ export default function AdminBookingsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-medium">{booking.flight.airline.name}</span>
+                                                <span className="font-medium">
+                                                    {booking.flight?.airline?.name || booking.flight_details?.airline || 'External Flight'}
+                                                </span>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {booking.flight.flight_number} • {booking.flight.origin_airport.code} → {booking.flight.destination_airport.code}
+                                                    {booking.flight?.flight_number || booking.flight_details?.flight_number || booking.pnr} • {booking.flight?.origin_airport?.code || booking.flight_details?.origin || '—'} → {booking.flight?.destination_airport?.code || booking.flight_details?.destination || '—'}
                                                 </span>
                                             </div>
                                         </TableCell>

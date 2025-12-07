@@ -602,8 +602,9 @@ class DuffelSupplier extends AbstractFlightSupplier
     public function book(NormalizedFlightOffer $offer, array $passengers): array
     {
         $payload = $this->buildBookingPayload($offer, $passengers);
+        $isHoldOrder = ($payload['type'] ?? 'instant') === 'hold';
 
-        $this->logInfo('Creating Duffel order', ['payload' => $payload]);
+        $this->logInfo('Creating Duffel order', ['payload' => $payload, 'is_hold' => $isHoldOrder]);
 
         $response = $this->getHttpClient()
             ->post($this->getBaseUrl() . '/air/orders', [
@@ -625,14 +626,82 @@ class DuffelSupplier extends AbstractFlightSupplier
         }
 
         $data = $response->json()['data'];
+        $orderId = $data['id'];
+
+        // If this was a hold order, we need to pay for it separately
+        if ($isHoldOrder) {
+            $this->logInfo('Paying for hold order', ['order_id' => $orderId]);
+            $this->payForOrder($orderId, $offer->price->total, $offer->price->currency);
+
+            // Re-fetch the order to get updated status and documents
+            $updatedOrder = $this->getOrder($orderId);
+            if ($updatedOrder) {
+                $data = $updatedOrder;
+            }
+        }
 
         return [
             'pnr' => $data['booking_reference'] ?? 'PENDING',
-            'order_id' => $data['id'],
+            'order_id' => $orderId,
             'ticket_number' => $data['documents'][0]['unique_identifier'] ?? null,
             'status' => 'confirmed',
             'raw_response' => $data,
         ];
+    }
+
+    /**
+     * Pay for a hold order using Duffel Payments API.
+     * 
+     * @see https://duffel.com/docs/api/payments/create-a-payment
+     */
+    protected function payForOrder(string $orderId, float $amount, string $currency): array
+    {
+        $payload = [
+            'order_id' => $orderId,
+            'payment' => [
+                'type' => 'balance',
+                'amount' => (string) $amount,
+                'currency' => $currency,
+            ],
+        ];
+
+        $this->logInfo('Creating Duffel payment', ['payload' => $payload]);
+
+        $response = $this->getHttpClient()
+            ->post($this->getBaseUrl() . '/air/payments', [
+                'data' => $payload,
+            ]);
+
+        if (!$response->successful()) {
+            $body = $response->json();
+            $error = $body['errors'][0]['message'] ?? 'Payment failed';
+            $this->logError('Payment failed', ['order_id' => $orderId, 'error' => $error, 'body' => $body]);
+            throw new \Exception('Duffel Payment Failed: ' . $error);
+        }
+
+        $paymentData = $response->json()['data'];
+        $this->logInfo('Payment successful', ['payment_id' => $paymentData['id'] ?? 'unknown']);
+
+        return $paymentData;
+    }
+
+    /**
+     * Get an order by ID from Duffel.
+     */
+    protected function getOrder(string $orderId): ?array
+    {
+        try {
+            $response = $this->getHttpClient()
+                ->get($this->getBaseUrl() . '/air/orders/' . $orderId);
+
+            if ($response->successful()) {
+                return $response->json()['data'];
+            }
+        } catch (\Exception $e) {
+            $this->logError('Failed to fetch order', ['order_id' => $orderId, 'error' => $e->getMessage()]);
+        }
+
+        return null;
     }
 
     /**

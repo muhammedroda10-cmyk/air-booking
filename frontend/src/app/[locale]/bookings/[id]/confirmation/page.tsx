@@ -7,23 +7,40 @@ import { useAuth } from '@/context/auth-context';
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Download, Home, Plane, Calendar, Clock, MapPin } from "lucide-react"
+import { CheckCircle2, Download, Home, Plane, Calendar, Clock, MapPin, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import confetti from 'canvas-confetti';
-import { useReactToPrint } from 'react-to-print';
 
 export default function ConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const { user } = useAuth();
     const [booking, setBooking] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDownloading, setIsDownloading] = useState(false);
     const componentRef = React.useRef<HTMLDivElement>(null);
 
-    const handlePrint = useReactToPrint({
-        contentRef: componentRef,
-        documentTitle: `Ticket-${booking?.pnr || 'Booking'}`,
-    });
+    const handleDownload = async () => {
+        if (!id) return;
+        setIsDownloading(true);
+        try {
+            const response = await api.get(`/bookings/${id}/download`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `ticket-${booking?.pnr || id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to download ticket', error);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -189,9 +206,15 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                                         <span className="text-xs font-medium uppercase tracking-wider">Date</span>
                                                     </div>
                                                     <p className="font-semibold text-slate-900 dark:text-white">
-                                                        {booking.flight?.departure_time || booking.flight_details?.departure_time
-                                                            ? new Date(booking.flight?.departure_time || booking.flight_details?.departure_time).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-                                                            : 'TBD'}
+                                                        {(() => {
+                                                            const dt = booking.flight?.departure_time || booking.flight_details?.departure_datetime;
+                                                            if (!dt) return 'TBD';
+                                                            try {
+                                                                const date = new Date(dt);
+                                                                if (isNaN(date.getTime())) return 'TBD';
+                                                                return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                                                            } catch { return 'TBD'; }
+                                                        })()}
                                                     </p>
                                                 </div>
                                                 <div>
@@ -200,9 +223,22 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                                         <span className="text-xs font-medium uppercase tracking-wider">Time</span>
                                                     </div>
                                                     <p className="font-semibold text-slate-900 dark:text-white">
-                                                        {booking.flight?.departure_time || booking.flight_details?.departure_time
-                                                            ? new Date(booking.flight?.departure_time || booking.flight_details?.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                                            : 'TBD'}
+                                                        {(() => {
+                                                            // Try full datetime first
+                                                            const dt = booking.flight?.departure_time || booking.flight_details?.departure_datetime;
+                                                            if (dt) {
+                                                                try {
+                                                                    const date = new Date(dt);
+                                                                    if (!isNaN(date.getTime())) {
+                                                                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                                    }
+                                                                } catch { }
+                                                            }
+                                                            // Fall back to raw time string
+                                                            const rawTime = booking.flight_details?.departure_time;
+                                                            if (rawTime) return rawTime;
+                                                            return 'TBD';
+                                                        })()}
                                                     </p>
                                                 </div>
                                             </div>
@@ -247,9 +283,9 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                         </div>
 
                         <CardFooter className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 p-6 flex flex-col sm:flex-row gap-4 justify-center mt-8 rounded-xl">
-                            <Button variant="outline" className="w-full sm:w-auto gap-2 h-11" onClick={() => handlePrint()}>
-                                <Download className="w-4 h-4" />
-                                Download Ticket
+                            <Button variant="outline" className="w-full sm:w-auto gap-2 h-11" onClick={handleDownload} disabled={isDownloading}>
+                                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                {isDownloading ? 'Downloading...' : 'Download Ticket'}
                             </Button>
                             <Button className="w-full sm:w-auto gap-2 h-11 bg-primary hover:bg-primary/90" asChild>
                                 <Link href="/dashboard">
