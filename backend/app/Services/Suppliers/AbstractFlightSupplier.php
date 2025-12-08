@@ -135,6 +135,16 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
     }
 
     /**
+     * Log warning with context.
+     */
+    protected function logWarning(string $message, array $context = []): void
+    {
+        Log::warning("[{$this->getSupplierCode()}] {$message}", array_merge([
+            'supplier' => $this->getSupplierCode(),
+        ], $context));
+    }
+
+    /**
      * Mark supplier as unhealthy if we have a database record.
      */
     protected function markUnhealthy(): void
@@ -229,4 +239,17 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
             ];
         }
     }
+
+    /**
+     * Get seat map for an offer. Override in suppliers that support seat selection.
+     */
+    public function getSeatMap(string $offerId): array
+    {
+        return [
+            'success' => false,
+            'error' => 'Seat selection is not supported by this supplier (' . $this->getSupplierCode() . ')',
+            'seats' => [],
+        ];
+    }
 }
+

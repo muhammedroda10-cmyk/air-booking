@@ -117,10 +117,26 @@ function FlightsContent() {
             setError(null)
 
             try {
-                const from = searchParams.get("from")
-                const to = searchParams.get("to")
-                const date = searchParams.get("date")
                 const tripType = searchParams.get("type") || "one-way"
+
+                // Handle multi-city separately (uses from0, to0, date0, from1, to1, date1, etc.)
+                const isMultiCity = tripType === "multi-city"
+
+                let from: string | null
+                let to: string | null
+                let date: string | null
+
+                if (isMultiCity) {
+                    // For multi-city, get the first leg
+                    from = searchParams.get("from0")
+                    to = searchParams.get("to0")
+                    date = searchParams.get("date0")
+                } else {
+                    // Standard one-way/round-trip parameters
+                    from = searchParams.get("from")
+                    to = searchParams.get("to")
+                    date = searchParams.get("date")
+                }
 
                 if (!from || !to || !date) {
                     setLoading(false)
@@ -128,11 +144,11 @@ function FlightsContent() {
                 }
 
                 // Call the hybrid search endpoint (searches all suppliers including database)
-                const params = {
+                const params: Record<string, any> = {
                     from,
                     to,
                     date,
-                    return_date: searchParams.get("returnDate"),
+                    return_date: isMultiCity ? null : searchParams.get("returnDate"),
                     adults: searchParams.get("adults") || "1",
                     children: searchParams.get("children") || "0",
                     infants: searchParams.get("infants") || "0",
@@ -142,6 +158,23 @@ function FlightsContent() {
                     min_price: searchParams.get("min_price"),
                     max_price: searchParams.get("max_price"),
                     max_stops: searchParams.get("max_stops"),
+                }
+
+                // For multi-city, add additional legs info
+                if (isMultiCity) {
+                    // Check for additional legs
+                    const legs = []
+                    let legIndex = 0
+                    while (searchParams.get(`from${legIndex}`)) {
+                        legs.push({
+                            from: searchParams.get(`from${legIndex}`),
+                            to: searchParams.get(`to${legIndex}`),
+                            date: searchParams.get(`date${legIndex}`),
+                        })
+                        legIndex++
+                    }
+                    params.multi_city_legs = JSON.stringify(legs)
+                    params.trip_type = "multiCity"
                 }
 
                 const response = await api.get('/flights/search-external', { params })
@@ -173,7 +206,12 @@ function FlightsContent() {
             }
         }
 
-        if (searchParams.get("from") && searchParams.get("to") && searchParams.get("date")) {
+        // Check if we have search parameters (standard or multi-city)
+        const hasStandardParams = searchParams.get("from") && searchParams.get("to") && searchParams.get("date")
+        const hasMultiCityParams = searchParams.get("type") === "multi-city" &&
+            searchParams.get("from0") && searchParams.get("to0") && searchParams.get("date0")
+
+        if (hasStandardParams || hasMultiCityParams) {
             fetchFlights()
         } else {
             setLoading(false)

@@ -62,15 +62,30 @@ export default function WalletPage() {
 
     const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount < 1 || parsedAmount > 10000) {
+            alert('Please enter a valid amount between $1 and $10,000');
+            return;
+        }
+
         setProcessing(true);
         try {
             const response = await api.post('/wallet/deposit', {
-                amount: parseFloat(amount)
+                amount: parsedAmount
             });
             setWallet(response.data);
             setAmount('');
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Deposit failed', error);
+            // Show validation errors from the server
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+                const errorMessage = axiosError.response?.data?.message ||
+                    (axiosError.response?.data?.errors?.amount?.[0]) ||
+                    'Deposit failed. Please try again.';
+                alert(errorMessage);
+            }
         } finally {
             setProcessing(false);
         }

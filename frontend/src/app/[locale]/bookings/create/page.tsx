@@ -425,37 +425,24 @@ function BookingForm() {
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="pt-6">
-                                                {isExternalFlight ? (
-                                                    <div className="text-center py-8">
-                                                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center">
-                                                            <Armchair className="w-8 h-8 text-slate-400" />
-                                                        </div>
-                                                        <h3 className="font-semibold text-lg mb-2">Seat Selection Not Available</h3>
-                                                        <p className="text-slate-500 max-w-md mx-auto">
-                                                            Seat selection for this flight is handled by the airline.
-                                                            You can select your seats during online check-in or at the airport.
+                                                <>
+                                                    <div className="mb-4">
+                                                        <p className="text-sm text-slate-500">
+                                                            Selected: <span className="font-bold text-primary">{selectedSeats.length}/{passengers.length}</span>
+                                                            {selectedSeats.length > 0 && (
+                                                                <span className="ml-2">
+                                                                    ({selectedSeats.join(', ')})
+                                                                </span>
+                                                            )}
                                                         </p>
                                                     </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="mb-4">
-                                                            <p className="text-sm text-slate-500">
-                                                                Selected: <span className="font-bold text-primary">{selectedSeats.length}/{passengers.length}</span>
-                                                                {selectedSeats.length > 0 && (
-                                                                    <span className="ml-2">
-                                                                        ({selectedSeats.join(', ')})
-                                                                    </span>
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                        <SeatMap
-                                                            flightId={flightId}
-                                                            selectedSeats={selectedSeats}
-                                                            onSelect={handleSeatSelect}
-                                                            maxSeats={passengers.length}
-                                                        />
-                                                    </>
-                                                )}
+                                                    <SeatMap
+                                                        flightId={flightId}
+                                                        selectedSeats={selectedSeats}
+                                                        onSelect={handleSeatSelect}
+                                                        maxSeats={passengers.length}
+                                                    />
+                                                </>
                                             </CardContent>
                                         </Card>
                                     )}

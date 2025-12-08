@@ -542,6 +542,148 @@ class DuffelSupplier extends AbstractFlightSupplier
     }
 
     /**
+     * Get seat map for an offer from Duffel API.
+     *
+     * @see https://duffel.com/docs/api/seat-maps/get-seat-maps
+     */
+    public function getSeatMap(string $offerId): array
+    {
+        try {
+            $this->logInfo('Fetching Duffel seat map', ['offer_id' => $offerId]);
+
+            $response = $this->getHttpClient()
+                ->get($this->getBaseUrl() . '/air/seat_maps', [
+                    'offer_id' => $offerId,
+                ]);
+
+            if (!$response->successful()) {
+                $body = $response->json();
+                $error = $body['errors'][0]['message'] ?? 'Unknown error';
+                $this->logError('Failed to fetch seat map', [
+                    'offer_id' => $offerId,
+                    'error' => $error,
+                ]);
+                return ['success' => false, 'error' => $error, 'seats' => []];
+            }
+
+            $data = $response->json();
+            $seatMaps = $data['data'] ?? [];
+
+            // Parse seat maps into standardized format
+            $seats = $this->parseSeatMaps($seatMaps);
+
+            $this->logInfo('Seat map fetched successfully', [
+                'offer_id' => $offerId,
+                'segments' => count($seatMaps),
+                'total_seats' => count($seats),
+            ]);
+
+            return [
+                'success' => true,
+                'seats' => $seats,
+                'raw_data' => $seatMaps,
+            ];
+        } catch (\Exception $e) {
+            $this->logError('Seat map fetch failed', [
+                'offer_id' => $offerId,
+                'error' => $e->getMessage(),
+            ]);
+            return ['success' => false, 'error' => $e->getMessage(), 'seats' => []];
+        }
+    }
+
+    /**
+     * Parse Duffel seat maps into standardized format for frontend.
+     */
+    protected function parseSeatMaps(array $seatMaps): array
+    {
+        $seats = [];
+
+        foreach ($seatMaps as $segmentIndex => $seatMap) {
+            $cabins = $seatMap['cabins'] ?? [];
+
+            $this->logInfo('Parsing seat map segment', [
+                'segment_index' => $segmentIndex,
+                'cabins_count' => count($cabins),
+            ]);
+
+            foreach ($cabins as $cabin) {
+                $cabinClass = $cabin['cabin_class'] ?? 'economy';
+                $rows = $cabin['rows'] ?? [];
+
+                $this->logInfo('Parsing cabin', [
+                    'cabin_class' => $cabinClass,
+                    'rows_count' => count($rows),
+                ]);
+
+                foreach ($rows as $row) {
+                    $sections = $row['sections'] ?? [];
+
+                    foreach ($sections as $section) {
+                        $elements = $section['elements'] ?? [];
+
+                        foreach ($elements as $element) {
+                            $type = $element['type'] ?? '';
+
+                            if ($type !== 'seat') {
+                                continue; // Skip aisles, galleys, empty spaces, etc.
+                            }
+
+                            $seatId = $element['designator'] ?? '';
+                            if (empty($seatId)) {
+                                continue;
+                            }
+
+                            // Duffel availability: seat is available if it has available_services
+                            $availableServices = $element['available_services'] ?? [];
+
+                            // Check different availability indicators
+                            $isAvailable = !empty($availableServices);
+
+                            // If no services, check if seat is simply unavailable
+                            if (!$isAvailable && isset($element['disclosures'])) {
+                                // Some seats might be blocked or have restrictions
+                                $isAvailable = false;
+                            }
+
+                            // Get seat price (if it's a paid seat)
+                            $price = 0;
+                            $serviceId = null;
+                            if (!empty($availableServices)) {
+                                $service = $availableServices[0];
+                                $price = floatval($service['total_amount'] ?? 0);
+                                $serviceId = $service['id'] ?? null;
+                            }
+
+                            // Map cabin class
+                            $classType = match (strtolower($cabinClass)) {
+                                'first' => 'first',
+                                'business' => 'business',
+                                'premium_economy' => 'premium_economy',
+                                default => 'economy',
+                            };
+
+                            $seats[] = [
+                                'id' => $seatId,
+                                'status' => $isAvailable ? 'available' : 'occupied',
+                                'class' => $classType,
+                                'price' => $price,
+                                'segment_index' => $segmentIndex,
+                                'service_id' => $serviceId,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->logInfo('Parsed seats', ['total_seats' => count($seats)]);
+
+        return $seats;
+    }
+
+
+    /**
      * Get default headers including Duffel authentication.
      */
     protected function getDefaultHeaders(): array
@@ -598,13 +740,13 @@ class DuffelSupplier extends AbstractFlightSupplier
     }
     /**
      * Create a booking with the supplier.
+     * Uses instant payment with Duffel balance.
      */
     public function book(NormalizedFlightOffer $offer, array $passengers): array
     {
         $payload = $this->buildBookingPayload($offer, $passengers);
-        $isHoldOrder = ($payload['type'] ?? 'instant') === 'hold';
 
-        $this->logInfo('Creating Duffel order', ['payload' => $payload, 'is_hold' => $isHoldOrder]);
+        $this->logInfo('Creating Duffel order', ['payload' => $payload]);
 
         $response = $this->getHttpClient()
             ->post($this->getBaseUrl() . '/air/orders', [
@@ -614,8 +756,13 @@ class DuffelSupplier extends AbstractFlightSupplier
         if (!$response->successful()) {
             $body = $response->json();
             $error = $body['errors'][0]['message'] ?? 'Unknown error';
-            $errorCode = $body['errors'][0]['code'] ?? null;
             $field = $body['errors'][0]['source']['field'] ?? null;
+
+            $this->logError('Duffel order creation failed', [
+                'error' => $error,
+                'field' => $field,
+                'full_response' => $body,
+            ]);
 
             // Provide clearer error messages for common issues
             if ($field === 'selected_offers' || str_contains($error, 'expired') || str_contains($error, 'no longer available')) {
@@ -628,17 +775,10 @@ class DuffelSupplier extends AbstractFlightSupplier
         $data = $response->json()['data'];
         $orderId = $data['id'];
 
-        // If this was a hold order, we need to pay for it separately
-        if ($isHoldOrder) {
-            $this->logInfo('Paying for hold order', ['order_id' => $orderId]);
-            $this->payForOrder($orderId, $offer->price->total, $offer->price->currency);
-
-            // Re-fetch the order to get updated status and documents
-            $updatedOrder = $this->getOrder($orderId);
-            if ($updatedOrder) {
-                $data = $updatedOrder;
-            }
-        }
+        $this->logInfo('Duffel order created successfully', [
+            'order_id' => $orderId,
+            'pnr' => $data['booking_reference'] ?? 'PENDING',
+        ]);
 
         return [
             'pnr' => $data['booking_reference'] ?? 'PENDING',
@@ -706,38 +846,29 @@ class DuffelSupplier extends AbstractFlightSupplier
 
     /**
      * Build booking payload for Duffel.
+     * 
+     * Always use instant payment with balance - this is more reliable than hold orders
+     * which have additional limitations (no services, may not be supported by all airlines).
      */
     protected function buildBookingPayload(NormalizedFlightOffer $offer, array $passengers): array
     {
         // Map passengers to Duffel's requirements using the Offer's passenger IDs
         $duffelPassengers = $this->mapPassengersToOffer($offer, $passengers);
 
-        // Check if this offer requires instant payment
-        $rawData = $offer->getRawData();
-        $requiresInstantPayment = $rawData['payment_requirements']['requires_instant_payment'] ?? false;
-
-        if ($requiresInstantPayment) {
-            // Use instant payment with balance (works in test mode with unlimited balance)
-            return [
-                'type' => 'instant',
-                'selected_offers' => [$offer->referenceId],
-                'passengers' => $duffelPassengers,
-                'payments' => [
-                    [
-                        'type' => 'balance',
-                        'amount' => (string) $offer->price->total,
-                        'currency' => $offer->price->currency,
-                    ]
-                ],
-            ];
-        }
-
-        // Use 'hold' type for offers that don't require instant payment
-        // Note: hold orders auto-cancel after the hold expires if not paid
+        // Always use instant payment with balance
+        // In Duffel test mode, we have unlimited balance
+        // In production, you would top up your Duffel balance
         return [
-            'type' => 'hold',
             'selected_offers' => [$offer->referenceId],
             'passengers' => $duffelPassengers,
+            'type' => 'instant',
+            'payments' => [
+                [
+                    'type' => 'balance',
+                    'amount' => (string) $offer->price->total,
+                    'currency' => $offer->price->currency,
+                ]
+            ],
         ];
     }
 
@@ -757,7 +888,8 @@ class DuffelSupplier extends AbstractFlightSupplier
 
         $isFirstPassenger = true;
         foreach ($passengers as $p) {
-            $type = $this->mapPassengerType($p['passenger_type'] ?? 'adult');
+            $passengerType = strtolower($p['passenger_type'] ?? 'adult');
+            $type = $this->mapPassengerType($passengerType);
 
             if (empty($availableSlots[$type])) {
                 throw new \Exception("Not enough slots for passenger type: {$type}");
@@ -765,26 +897,94 @@ class DuffelSupplier extends AbstractFlightSupplier
 
             $duffelId = array_shift($availableSlots[$type]);
 
+            // Parse date of birth with robust handling
+            $bornOn = $this->parseDateOfBirth($p['date_of_birth'] ?? null, $passengerType);
+
+            // Map title to Duffel's accepted values
+            $title = $this->mapTitle($p['title'] ?? null, $p['gender'] ?? null, $passengerType);
+
             $passengerData = [
                 'id' => $duffelId,
-                'given_name' => $p['first_name'] ?? $p['name'] ?? 'Test',
-                'family_name' => $p['last_name'] ?? 'Passenger',
-                'born_on' => !empty($p['date_of_birth']) ? Carbon::parse($p['date_of_birth'])->format('Y-m-d') : '1990-01-15',
+                'given_name' => trim($p['first_name'] ?? '') ?: ($p['name'] ?? 'Guest'),
+                'family_name' => trim($p['last_name'] ?? '') ?: 'Traveler',
+                'born_on' => $bornOn,
                 'gender' => isset($p['gender']) ? strtolower($p['gender'])[0] : 'm',
-                'title' => $p['title'] ?? 'mr',
+                'title' => $title,
             ];
 
             // Only add email and phone for the first passenger (contact)
             if ($isFirstPassenger) {
-                $passengerData['email'] = $p['email'] ?? 'test@example.com';
+                $passengerData['email'] = $p['email'] ?? 'contact@example.com';
                 $passengerData['phone_number'] = $p['phone_number'] ?? '+441234567890';
                 $isFirstPassenger = false;
             }
+
+            $this->logInfo('Mapped passenger for Duffel', [
+                'passenger_type' => $passengerType,
+                'duffel_type' => $type,
+                'born_on' => $bornOn,
+            ]);
 
             $mappedPassengers[] = $passengerData;
         }
 
         return $mappedPassengers;
+    }
+
+    /**
+     * Parse date of birth with robust handling of various formats.
+     * Returns appropriate default dates if parsing fails or date is empty.
+     */
+    protected function parseDateOfBirth(?string $dateOfBirth, string $passengerType): string
+    {
+        // Try to parse the provided date
+        if (!empty($dateOfBirth)) {
+            try {
+                // Handle Carbon serialized dates (could be ISO format with timezone)
+                $date = Carbon::parse($dateOfBirth);
+
+                // Validate it's a reasonable birth date (not in the future, not too old)
+                if ($date->isFuture()) {
+                    $this->logWarning('Birth date is in the future, using default', ['date' => $dateOfBirth]);
+                } elseif ($date->diffInYears(Carbon::now()) > 120) {
+                    $this->logWarning('Birth date is too old, using default', ['date' => $dateOfBirth]);
+                } else {
+                    return $date->format('Y-m-d');
+                }
+            } catch (\Exception $e) {
+                $this->logWarning('Failed to parse date of birth', [
+                    'date' => $dateOfBirth,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Return appropriate default based on passenger type
+        return match ($passengerType) {
+            'infant' => Carbon::now()->subMonths(6)->format('Y-m-d'),  // 6 months old
+            'child' => Carbon::now()->subYears(8)->format('Y-m-d'),    // 8 years old
+            default => Carbon::now()->subYears(30)->format('Y-m-d'),   // 30 years old adult
+        };
+    }
+
+    /**
+     * Map title to Duffel's accepted values (mr, mrs, ms, miss, dr).
+     */
+    protected function mapTitle(?string $title, ?string $gender, string $passengerType): string
+    {
+        if (!empty($title)) {
+            $normalizedTitle = strtolower(trim($title));
+            if (in_array($normalizedTitle, ['mr', 'mrs', 'ms', 'miss', 'dr'])) {
+                return $normalizedTitle;
+            }
+        }
+
+        // Default based on gender and type
+        if ($passengerType === 'infant' || $passengerType === 'child') {
+            return isset($gender) && strtolower($gender)[0] === 'f' ? 'miss' : 'mr';
+        }
+
+        return isset($gender) && strtolower($gender)[0] === 'f' ? 'ms' : 'mr';
     }
 
     protected function mapPassengerType(string $type): string

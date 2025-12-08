@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Flight;
+use App\Services\FlightSupplierManager;
 use Illuminate\Http\Request;
 
 class SeatController extends Controller
@@ -41,9 +42,9 @@ class SeatController extends Controller
             foreach ($columns as $col) {
                 // Determine class based on row
                 $class = $i <= 3 ? 'business' : 'economy';
-                
+
                 // Randomly mark some as booked for realism if it's a new generation
-                $isBooked = rand(0, 100) < 20; 
+                $isBooked = rand(0, 100) < 20;
 
                 $seats[] = [
                     'flight_id' => $flight->id,
@@ -62,10 +63,60 @@ class SeatController extends Controller
     public function lock(Request $request, Flight $flight)
     {
         $seats = $request->input('seats', []);
-        
+
         // Validation logic would go here
-        
+
         return response()->json(['message' => 'Seats locked successfully']);
     }
 
+    /**
+     * Get seat map for an API offer (Duffel, FlightBuffer, etc.)
+     */
+    public function showOfferSeats(Request $request, FlightSupplierManager $supplierManager)
+    {
+        $offerId = $request->query('offer_id');
+        $supplier = $request->query('supplier', 'duffel');
+
+        if (empty($offerId)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'offer_id is required',
+                'seats' => []
+            ], 400);
+        }
+
+        // Route to the appropriate supplier
+        if ($supplier === 'duffel') {
+            $duffelSupplier = $supplierManager->driver('duffel');
+
+            if (!$duffelSupplier) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Duffel supplier not configured',
+                    'seats' => []
+                ], 503);
+            }
+
+            $result = $duffelSupplier->getSeatMap($offerId);
+
+            return response()->json([
+                'success' => $result['success'],
+                'error' => $result['error'] ?? null,
+                'seats' => $result['seats'] ?? [],
+                'offer_id' => $offerId,
+                'supplier' => $supplier,
+                'debug' => [
+                    'segments_count' => isset($result['raw_data']) ? count($result['raw_data']) : 0,
+                    'has_raw_data' => isset($result['raw_data']) && !empty($result['raw_data']),
+                ],
+            ]);
+        }
+
+        // For other suppliers that don't support seat selection
+        return response()->json([
+            'success' => false,
+            'error' => "Seat selection not available for supplier: {$supplier}",
+            'seats' => []
+        ], 400);
+    }
 }

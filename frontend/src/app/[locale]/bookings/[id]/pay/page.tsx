@@ -176,12 +176,12 @@ export default function PaymentPage() {
     };
 
     const handleSuccess = () => {
-        setCompleted(true);
         toast({
             title: "Success",
-            description: "Payment successful! Your booking is confirmed.",
+            description: "Payment successful! Redirecting to confirmation...",
         });
-        // User will be redirected manually via the buttons on confirmation page
+        // Redirect to confirmation page
+        router.push(`/bookings/${id}/confirmation`);
     };
 
     if (loading || authLoading) {

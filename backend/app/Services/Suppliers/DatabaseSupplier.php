@@ -76,6 +76,18 @@ class DatabaseSupplier extends AbstractFlightSupplier
             $query->where('airline_id', $request->filters['airline_id']);
         }
 
+        // Apply cabin class filter
+        $cabinClass = strtolower($request->cabin ?? 'economy');
+        // Map common cabin class variations to database values
+        $mappedCabin = match ($cabinClass) {
+            'economy', 'y' => 'economy',
+            'premium_economy', 'premium economy', 'w' => 'premium_economy',
+            'business', 'c', 'j' => 'business',
+            'first', 'f' => 'first',
+            default => 'economy',
+        };
+        $query->where('cabin_class', $mappedCabin);
+
         return $query->orderBy('departure_time', 'asc')->get();
     }
 
@@ -144,7 +156,7 @@ class DatabaseSupplier extends AbstractFlightSupplier
             airline: $airline,
             operatingAirline: null,
             flightNumber: $flight->flight_number,
-            cabin: ucfirst($request->cabin),
+            cabin: ucfirst($flight->cabin_class ?? $request->cabin),
             duration: $durationMinutes,
             aircraft: $flight->aircraft_type ?? null,
             luggage: ($flight->default_baggage ?? 23) . ' KG',
@@ -159,7 +171,7 @@ class DatabaseSupplier extends AbstractFlightSupplier
             arrival: $arrival,
             duration: $durationMinutes,
             stops: 0, // Database flights are direct
-            cabin: ucfirst($request->cabin),
+            cabin: ucfirst($flight->cabin_class ?? $request->cabin),
             segments: [$segment],
             airline: $airline,
             flightNumber: $flight->flight_number,

@@ -60,4 +60,13 @@ interface FlightSupplierInterface
      * @return array{success: bool, message: string, latency_ms?: int}
      */
     public function testConnection(): array;
+
+    /**
+     * Get seat map for an offer (optional - not all suppliers support this).
+     *
+     * @param string $offerId The offer ID to get seat map for
+     * @return array{success: bool, seats: array, error?: string}
+     */
+    public function getSeatMap(string $offerId): array;
 }
+

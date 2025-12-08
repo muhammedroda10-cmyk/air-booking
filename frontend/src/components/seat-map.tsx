@@ -78,23 +78,87 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
         const [error, setError] = React.useState<string | null>(null)
 
         React.useEffect(() => {
-            // Only fetch seats for numeric (local) flight IDs
-            const numericId = typeof flightId === 'number' ? flightId : parseInt(String(flightId), 10)
-            if (flightId && !isNaN(numericId) && numericId > 0) {
-                fetchSeats()
+            if (!flightId) return
+
+            // Detect if this is an API offer ID (string like "duffel_xxx" or "off_xxx")
+            const flightIdStr = String(flightId)
+            const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('off_') ||
+                flightIdStr.startsWith('database_')
+
+            if (isApiOffer) {
+                fetchApiOfferSeats(flightIdStr)
+            } else {
+                // Numeric (local) flight IDs use the database endpoint
+                const numericId = typeof flightId === 'number' ? flightId : parseInt(flightIdStr, 10)
+                if (!isNaN(numericId) && numericId > 0) {
+                    fetchDatabaseSeats(numericId)
+                }
             }
         }, [flightId])
 
-        const fetchSeats = async () => {
+        const fetchDatabaseSeats = async (numericId: number) => {
             setLoading(true)
+            setError(null)
             try {
-                const response = await api.get(`/flights/${flightId}/seats`)
+                const response = await api.get(`/flights/${numericId}/seats`)
                 setSeats(response.data.seats)
             } catch (err) {
                 console.error("Failed to fetch seats:", err)
                 setError("Failed to load seat map")
             } finally {
                 setLoading(false)
+            }
+        }
+
+        const fetchApiOfferSeats = async (offerId: string) => {
+            setLoading(true)
+            setError(null)
+            try {
+                // Extract the actual offer ID from prefixed format
+                let actualOfferId = offerId
+                let supplier = 'duffel'
+
+                if (offerId.startsWith('duffel_')) {
+                    actualOfferId = offerId.replace('duffel_', '')
+                    supplier = 'duffel'
+                } else if (offerId.startsWith('database_')) {
+                    // Database offers don't have external seat maps
+                    setError(dir === 'rtl' ? 'اختيار المقعد غير متاح لهذه الرحلة' : 'Seat selection is handled at check-in for this flight')
+                    setLoading(false)
+                    return
+                }
+
+                const response = await api.get(`/offers/seats`, {
+                    params: { offer_id: actualOfferId, supplier }
+                })
+
+                if (response.data.success) {
+                    setSeats(response.data.seats || [])
+                } else {
+                    setError(response.data.error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد' : 'No seat data available'))
+                }
+            } catch (err) {
+                console.error("Failed to fetch API offer seats:", err)
+                setError(dir === 'rtl' ? 'فشل في تحميل خريطة المقاعد' : "Failed to load seat map")
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        const fetchSeats = async () => {
+            const flightIdStr = String(flightId)
+            const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('off_') ||
+                flightIdStr.startsWith('database_')
+
+            if (isApiOffer) {
+                await fetchApiOfferSeats(flightIdStr)
+            } else {
+                const numericId = typeof flightId === 'number' ? flightId : parseInt(flightIdStr, 10)
+                if (!isNaN(numericId)) {
+                    await fetchDatabaseSeats(numericId)
+                }
             }
         }
 
@@ -149,14 +213,33 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
         }
 
         if (error || !seats.length) {
+            // Detect if this is an external/API flight
+            const flightIdStr = String(flightId)
+            const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('off_') ||
+                flightIdStr.startsWith('database_')
+
             return (
-                <Card className="min-h-[200px] flex items-center justify-center bg-slate-50 dark:bg-slate-900 border-dashed">
-                    <p className="text-muted-foreground">
-                        {error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد' : 'No seat data available')}
+                <Card className="min-h-[200px] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 border-dashed p-8 text-center">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mb-4 flex items-center justify-center">
+                        <Armchair className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">
+                        {dir === 'rtl' ? 'اختيار المقاعد غير متاح حالياً' : 'Seat Selection Not Available'}
+                    </h3>
+                    <p className="text-muted-foreground max-w-md mb-4">
+                        {isApiOffer
+                            ? (dir === 'rtl'
+                                ? 'سيتم اختيار المقاعد أثناء تسجيل الوصول عبر الإنترنت أو في المطار. يمكنك المتابعة للخطوة التالية.'
+                                : 'Seats for this flight will be assigned during online check-in or at the airport. You can proceed to the next step.')
+                            : (error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد' : 'No seat data available'))
+                        }
                     </p>
-                    <button onClick={fetchSeats} className="ml-2 text-primary hover:underline">
-                        {dir === 'rtl' ? 'إعادة المحاولة' : 'Retry'}
-                    </button>
+                    {!isApiOffer && (
+                        <button onClick={fetchSeats} className="text-primary hover:underline text-sm">
+                            {dir === 'rtl' ? 'إعادة المحاولة' : 'Retry'}
+                        </button>
+                    )}
                 </Card>
             )
         }

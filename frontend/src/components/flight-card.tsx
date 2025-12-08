@@ -291,48 +291,59 @@ export function FlightCard({
                             </h4>
                             <div className="space-y-8">
                                 {segments.map((segment, index) => (
-                                    <div key={index} className="relative pl-8 border-l-2 border-slate-200 dark:border-slate-700 ml-3 rtl:mr-3 rtl:ml-0 rtl:pl-0 rtl:pr-8 rtl:border-l-0 rtl:border-r-2 last:border-0">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-full rtl:-right-[9px] rtl:left-auto" />
+                                    <div key={index} className="relative">
+                                        {/* Continuous vertical line */}
+                                        <div className="absolute left-[7px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-500 via-slate-300 to-teal-500" />
 
-                                        <div className="mb-6">
-                                            <div className="flex items-baseline gap-3 mb-1">
-                                                <p className="text-xl font-bold text-slate-900 dark:text-white">{segment.departureTime}</p>
-                                                <p className="text-base font-medium text-slate-600 dark:text-slate-400">{segment.origin}</p>
-                                            </div>
-                                            <p className="text-sm text-slate-500">Departing from Terminal 1</p>
-                                        </div>
-
-                                        <div className="mb-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-center gap-6">
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                                                    <Plane className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+                                        {/* Departure */}
+                                        <div className="relative flex items-start gap-5 mb-6">
+                                            <div className="relative z-10 w-4 h-4 bg-indigo-500 rounded-full border-4 border-white dark:border-slate-900 shadow-md shrink-0" />
+                                            <div className="flex-1 min-w-0 -mt-0.5">
+                                                <div className="flex items-baseline gap-3 mb-1">
+                                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{segment.departureTime}</p>
+                                                    <p className="text-base font-semibold text-slate-700 dark:text-slate-300">{segment.origin}</p>
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-slate-900 dark:text-white">{segment.airline}</p>
-                                                    <p className="text-sm text-slate-500">{segment.flightNumber} • Boeing 787-9 Dreamliner</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex gap-6 text-slate-500">
-                                                <div className="flex items-center gap-2 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
-                                                    <Wifi className="w-3.5 h-3.5" /> Wi-Fi
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
-                                                    <Utensils className="w-3.5 h-3.5" /> Meal
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
-                                                    <Luggage className="w-3.5 h-3.5" /> 23kg
-                                                </div>
+                                                <p className="text-sm text-slate-500">Departing from Terminal 1</p>
                                             </div>
                                         </div>
 
-                                        <div className="relative">
-                                            <div className="absolute -left-[9px] top-1 w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded-full border-2 border-white dark:border-slate-900 rtl:-right-[9px] rtl:left-auto" />
-                                            <div className="flex items-baseline gap-3 mb-1">
-                                                <p className="text-xl font-bold text-slate-900 dark:text-white">{segment.arrivalTime}</p>
-                                                <p className="text-base font-medium text-slate-600 dark:text-slate-400">{segment.destination}</p>
+                                        {/* Flight Info Card */}
+                                        <div className="ml-9 mb-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center shrink-0">
+                                                        <Plane className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-slate-900 dark:text-white">{segment.airline}</p>
+                                                        <p className="text-sm text-slate-500">{segment.flightNumber} • Boeing 787-9 Dreamliner</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-2 text-slate-500">
+                                                    <div className="flex items-center gap-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
+                                                        <Wifi className="w-3.5 h-3.5" /> Wi-Fi
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
+                                                        <Utensils className="w-3.5 h-3.5" /> Meal
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs font-medium bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-full">
+                                                        <Luggage className="w-3.5 h-3.5" /> {baggageAllowance}kg
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-slate-500">Arriving at Terminal 3</p>
+                                        </div>
+
+                                        {/* Arrival */}
+                                        <div className="relative flex items-start gap-5">
+                                            <div className="relative z-10 w-4 h-4 bg-teal-500 rounded-full border-4 border-white dark:border-slate-900 shadow-md shrink-0" />
+                                            <div className="flex-1 min-w-0 -mt-0.5">
+                                                <div className="flex items-baseline gap-3 mb-1">
+                                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{segment.arrivalTime}</p>
+                                                    <p className="text-base font-semibold text-slate-700 dark:text-slate-300">{segment.destination}</p>
+                                                </div>
+                                                <p className="text-sm text-slate-500">Arriving at Terminal 3</p>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

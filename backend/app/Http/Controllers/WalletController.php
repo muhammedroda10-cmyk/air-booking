@@ -62,8 +62,9 @@ class WalletController extends Controller
         $wallet->load(['transactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(20)]);
 
         return response()->json([
-            'message' => 'Deposit successful',
+            'id' => $wallet->id,
             'balance' => round((float) $wallet->balance, 2),
+            'currency' => 'USD', // Default currency
             'transactions' => $wallet->transactions,
             'stats' => $this->calculateStats($wallet),
         ]);

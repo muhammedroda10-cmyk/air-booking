@@ -14,6 +14,7 @@ Route::get('/flights/routes', [\App\Http\Controllers\FlightController::class, 'r
 Route::get('/flights', [\App\Http\Controllers\FlightController::class, 'index']);
 Route::get('/flights/{flight}', [\App\Http\Controllers\FlightController::class, 'show']);
 Route::get('/flights/{flight}/seats', [\App\Http\Controllers\SeatController::class, 'index']);
+Route::get('/offers/seats', [\App\Http\Controllers\SeatController::class, 'showOfferSeats']);
 Route::get('/flights/{flight}/packages', [\App\Http\Controllers\FlightPackageController::class, 'index']);
 Route::get('/airports', [\App\Http\Controllers\AirportController::class, 'index']);
 Route::get('/airlines', [\App\Http\Controllers\AirlineController::class, 'index']);
