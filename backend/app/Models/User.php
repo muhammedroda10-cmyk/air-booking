@@ -103,8 +103,19 @@ class User extends Authenticatable
         return $this->hasMany(Wishlist::class);
     }
 
+    public function priceAlerts(): HasMany
+    {
+        return $this->hasMany(PriceAlert::class);
+    }
+
+    public function loyaltyPoints(): HasOne
+    {
+        return $this->hasOne(LoyaltyPoints::class);
+    }
+
     public function unreadNotifications(): HasMany
     {
         return $this->notifications()->unread();
     }
+
 }

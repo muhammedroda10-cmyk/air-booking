@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { LanguageProvider } from "@/context/language-context";
 import { ToastProvider } from "@/context/toast-context";
 import { locales } from "@/i18n/config";
+import { ClientErrorBoundary } from "@/components/client-error-boundary";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -42,7 +43,11 @@ export default async function LocaleLayout({ children, params }: Props) {
             >
                 <LanguageProvider locale={currentLocale as 'en' | 'ar'}>
                     <ToastProvider>
-                        <AuthProvider>{children}</AuthProvider>
+                        <AuthProvider>
+                            <ClientErrorBoundary>
+                                {children}
+                            </ClientErrorBoundary>
+                        </AuthProvider>
                     </ToastProvider>
                 </LanguageProvider>
             </body>

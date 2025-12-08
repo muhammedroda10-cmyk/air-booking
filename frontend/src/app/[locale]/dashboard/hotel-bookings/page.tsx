@@ -23,9 +23,9 @@ import {
 
 interface HotelBooking {
     id: number;
-    check_in_date: string;
-    check_out_date: string;
-    guests: number;
+    check_in: string;
+    check_out: string;
+    guests?: number;
     total_price: number;
     status: string;
     created_at: string;
@@ -132,27 +132,27 @@ export default function HotelBookingsPage() {
                                                         <p className="text-muted-foreground">Check-in</p>
                                                         <p className="font-medium flex items-center gap-1">
                                                             <Calendar className="w-4 h-4" />
-                                                            {new Date(booking.check_in_date).toLocaleDateString()}
+                                                            {new Date(booking.check_in).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p className="text-muted-foreground">Check-out</p>
                                                         <p className="font-medium flex items-center gap-1">
                                                             <Calendar className="w-4 h-4" />
-                                                            {new Date(booking.check_out_date).toLocaleDateString()}
+                                                            {new Date(booking.check_out).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p className="text-muted-foreground">Nights</p>
                                                         <p className="font-medium">
-                                                            {calculateNights(booking.check_in_date, booking.check_out_date)}
+                                                            {calculateNights(booking.check_in, booking.check_out)}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p className="text-muted-foreground">Guests</p>
                                                         <p className="font-medium flex items-center gap-1">
                                                             <Users className="w-4 h-4" />
-                                                            {booking.guests}
+                                                            {booking.guests || 2}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -162,7 +162,7 @@ export default function HotelBookingsPage() {
                                                 <div className="text-right">
                                                     <p className="text-sm text-muted-foreground">Total</p>
                                                     <p className="text-2xl font-bold text-primary">
-                                                        ${booking.total_price.toFixed(2)}
+                                                        ${Number(booking.total_price).toFixed(2)}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {booking.room?.type || 'Standard Room'}

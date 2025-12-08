@@ -12,6 +12,8 @@ const api = axios.create({
 // Public GET endpoints that don't require authentication
 const publicGetEndpoints = [
     '/flights/search',
+    '/flights/search-external',
+    '/flights/offer-details',
     '/flights/routes',
     '/flights',
     '/airports',

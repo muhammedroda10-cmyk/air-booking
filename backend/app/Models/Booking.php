@@ -84,6 +84,11 @@ class Booking extends Model
         return $this->hasOne(PromoCodeUsage::class);
     }
 
+    public function addons(): HasMany
+    {
+        return $this->hasMany(BookingAddon::class);
+    }
+
     // Calculate refund based on airline cancellation policy
     public function calculateRefund(): array
     {

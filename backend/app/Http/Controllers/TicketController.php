@@ -384,27 +384,46 @@ class TicketController extends Controller
         }
 
         try {
-            \Spatie\Browsershot\Browsershot::html($html)
-                ->setNodeBinary(config('browsershot.node_binary', 'node'))
-                ->setNpmBinary(config('browsershot.npm_binary', 'npm'))
-                ->format('A4')
-                ->margins(0, 0, 0, 0)
-                ->showBackground()
-                ->waitUntilNetworkIdle()
-                ->save($tempPath);
+            // Try Browsershot first (best quality)
+            if (class_exists('\\Spatie\\Browsershot\\Browsershot')) {
+                \Spatie\Browsershot\Browsershot::html($html)
+                    ->setNodeBinary(config('browsershot.node_binary', 'node'))
+                    ->setNpmBinary(config('browsershot.npm_binary', 'npm'))
+                    ->format('A4')
+                    ->margins(0, 0, 0, 0)
+                    ->showBackground()
+                    ->waitUntilNetworkIdle()
+                    ->save($tempPath);
 
-            return response()->download($tempPath, $filename, [
-                'Content-Type' => 'application/pdf',
-                'Cache-Control' => 'no-store, no-cache, must-revalidate',
-                'Pragma' => 'no-cache',
-            ])->deleteFileAfterSend(true);
+                return response()->download($tempPath, $filename, [
+                    'Content-Type' => 'application/pdf',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                    'Pragma' => 'no-cache',
+                ])->deleteFileAfterSend(true);
+            }
+            throw new \Exception('Browsershot not available');
         } catch (\Exception $e) {
-            // Fallback to DomPDF if Browsershot fails
-            \Log::error('Browsershot failed, falling back to DomPDF: ' . $e->getMessage());
-
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.ticket', $data);
-            $pdf->setPaper('a4', 'portrait');
-            return $pdf->download($filename)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+            \Log::warning('Browsershot not available: ' . $e->getMessage());
+            
+            // Try DomPDF fallback
+            try {
+                if (class_exists('\\Barryvdh\\DomPDF\\Facade\\Pdf')) {
+                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.ticket', $data);
+                    $pdf->setPaper('a4', 'portrait');
+                    return $pdf->download($filename)->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                }
+                throw new \Exception('DomPDF not available');
+            } catch (\Exception $e2) {
+                \Log::warning('DomPDF not available: ' . $e2->getMessage());
+                
+                // Return HTML as a downloadable file instead
+                $htmlFilename = 'ticket-' . $booking->pnr . '.html';
+                return response($html, 200, [
+                    'Content-Type' => 'text/html',
+                    'Content-Disposition' => 'attachment; filename="' . $htmlFilename . '"',
+                    'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                ]);
+            }
         }
     }
 

@@ -274,10 +274,28 @@ function FlightsContent() {
                                 ) : sortedFlights.length > 0 ? (
                                     sortedFlights.map((offer) => {
                                         const firstLeg = offer.legs[0]
+                                        const returnLeg = offer.legs[1] // Return leg for round-trip
                                         if (!firstLeg) return null
+
+                                        // Get trip type from URL
+                                        const tripType = (searchParams.get("type") as 'one-way' | 'round-trip' | 'open-return' | 'multi-city') || 'one-way'
+                                        const departureDate = searchParams.get("date") || undefined
+                                        const returnDate = searchParams.get("returnDate") || undefined
 
                                         // Build segments for display
                                         const segments = firstLeg.segments.map((seg) => ({
+                                            airline: seg.airline?.name || offer.validating_airline?.name || 'Airline',
+                                            airlineLogo: offer.validating_airline?.logo || undefined,
+                                            flightNumber: seg.flight_number,
+                                            origin: seg.departure.airport_code,
+                                            destination: seg.arrival.airport_code,
+                                            departureTime: seg.departure.time,
+                                            arrivalTime: seg.arrival.time,
+                                            duration: seg.duration_formatted || `${Math.floor(seg.duration / 60)}h ${seg.duration % 60}m`,
+                                        }))
+
+                                        // Build return segments if available
+                                        const returnSegments = returnLeg?.segments.map((seg) => ({
                                             airline: seg.airline?.name || offer.validating_airline?.name || 'Airline',
                                             airlineLogo: offer.validating_airline?.logo || undefined,
                                             flightNumber: seg.flight_number,
@@ -306,6 +324,12 @@ function FlightsContent() {
                                                 seatsLeft={offer.seats_available}
                                                 supplierCode={offer.supplier_code}
                                                 referenceId={offer.reference_id}
+                                                tripType={tripType}
+                                                departureDate={departureDate}
+                                                returnDate={returnDate}
+                                                returnSegments={returnSegments}
+                                                returnStops={returnLeg?.stops || 0}
+                                                returnDuration={returnLeg?.duration_formatted}
                                             />
                                         )
                                     })

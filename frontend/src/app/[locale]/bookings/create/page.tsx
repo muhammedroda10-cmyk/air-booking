@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Plane, Calendar, Clock, User, Armchair, Trash2, Plus, CreditCard, CheckCircle2, ChevronRight, ChevronLeft, Wallet } from "lucide-react"
+import { Plane, Calendar, Clock, User, Armchair, Trash2, Plus, CreditCard, CheckCircle2, ChevronRight, ChevronLeft, Wallet, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { motion, AnimatePresence } from "framer-motion"
 import { StepIndicator } from "@/components/step-indicator"
 import { SeatMap } from "@/components/seat-map"
+import { BookingAddons } from "@/components/booking-addons"
 import { useLanguage } from "@/context/language-context"
 
 interface Flight {
@@ -43,7 +44,8 @@ function BookingForm() {
     const router = useRouter();
     const { user, isLoading: isAuthLoading } = useAuth();
     const { t } = useLanguage();
-    const flightId = searchParams.get('flight_id');
+    const flightId = searchParams.get('flight_id') || '';
+    const isExternalFlight = flightId && isNaN(parseInt(flightId, 10));
     const packageId = searchParams.get('package'); // Get selected package from URL
 
     // Get passenger counts from URL
@@ -53,20 +55,19 @@ function BookingForm() {
     const totalPassengerCount = Math.max(1, adults + children + infants);
 
     const [flight, setFlight] = useState<Flight | null>(null);
-    const [selectedPackage, setSelectedPackage] = useState<any>(null);
     const [passengers, setPassengers] = useState<Passenger[]>([]);
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+    const [selectedAddons, setSelectedAddons] = useState<{ [key: number]: number }>({});
+    const [addonsCost, setAddonsCost] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentStep, setCurrentStep] = useState(0);
-    const [bookingComplete, setBookingComplete] = useState(false);
-    const [bookingId, setBookingId] = useState<number | null>(null);
 
     const steps = [
         t?.booking?.steps?.passengers || "Passengers",
         t?.booking?.steps?.seats || "Seats",
+        t?.booking?.steps?.extras || "Extras",
         t?.booking?.steps?.payment || "Payment",
-        t?.booking?.steps?.confirmation || "Confirmation"
     ];
 
     // Initialize passengers from URL params
@@ -121,6 +122,11 @@ function BookingForm() {
         }
     };
 
+    const handleAddonsUpdate = (addons: { [key: number]: number }, totalCost: number) => {
+        setSelectedAddons(addons);
+        setAddonsCost(totalCost);
+    };
+
     const nextStep = async () => {
         if (currentStep === 0) {
             // Validate passengers
@@ -132,7 +138,7 @@ function BookingForm() {
             setError('');
         }
 
-        if (currentStep === 2) {
+        if (currentStep === 3) {
             // Submit booking
             await handleSubmit();
         } else {
@@ -160,15 +166,22 @@ function BookingForm() {
                 phone_number: p.phone_number || null
             }));
 
+            // Format addons for API
+            const addonsPayload = Object.entries(selectedAddons).map(([id, quantity]) => ({
+                id: parseInt(id),
+                quantity
+            }));
+
             const response = await api.post('/bookings', {
                 flight_id: flightId,
                 package_id: packageId || null,
                 passengers: passengersPayload,
+                addons: addonsPayload
             });
 
             const newBookingId = response.data.booking?.id || response.data.id;
 
-            // Redirect directly to payment page instead of showing confirmation
+            // Redirect directly to payment page
             router.push(`/bookings/${newBookingId}/pay`);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to create booking');
@@ -179,7 +192,7 @@ function BookingForm() {
     const TAX_RATE = 0.10;
     const baseFare = (flight?.base_price || 0) * passengers.length;
     const taxes = baseFare * TAX_RATE;
-    const totalPrice = baseFare + taxes;
+    const totalPrice = baseFare + taxes + addonsCost;
 
     const formatTime = (dateStr: string) => {
         return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -361,7 +374,6 @@ function BookingForm() {
                                                                         />
                                                                     </div>
                                                                 </div>
-                                                                {/* Email and Phone for first passenger (contact) */}
                                                                 {index === 0 && (
                                                                     <>
                                                                         <div className="space-y-2">
@@ -413,28 +425,69 @@ function BookingForm() {
                                                 </div>
                                             </CardHeader>
                                             <CardContent className="pt-6">
-                                                <div className="mb-4">
-                                                    <p className="text-sm text-slate-500">
-                                                        Selected: <span className="font-bold text-primary">{selectedSeats.length}/{passengers.length}</span>
-                                                        {selectedSeats.length > 0 && (
-                                                            <span className="ml-2">
-                                                                ({selectedSeats.join(', ')})
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                </div>
-                                                <SeatMap
-                                                    flightId={parseInt(flightId || '0')}
-                                                    selectedSeats={selectedSeats}
-                                                    onSelect={handleSeatSelect}
-                                                    maxSeats={passengers.length}
-                                                />
+                                                {isExternalFlight ? (
+                                                    <div className="text-center py-8">
+                                                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                                            <Armchair className="w-8 h-8 text-slate-400" />
+                                                        </div>
+                                                        <h3 className="font-semibold text-lg mb-2">Seat Selection Not Available</h3>
+                                                        <p className="text-slate-500 max-w-md mx-auto">
+                                                            Seat selection for this flight is handled by the airline.
+                                                            You can select your seats during online check-in or at the airport.
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="mb-4">
+                                                            <p className="text-sm text-slate-500">
+                                                                Selected: <span className="font-bold text-primary">{selectedSeats.length}/{passengers.length}</span>
+                                                                {selectedSeats.length > 0 && (
+                                                                    <span className="ml-2">
+                                                                        ({selectedSeats.join(', ')})
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                        <SeatMap
+                                                            flightId={flightId}
+                                                            selectedSeats={selectedSeats}
+                                                            onSelect={handleSeatSelect}
+                                                            maxSeats={passengers.length}
+                                                        />
+                                                    </>
+                                                )}
                                             </CardContent>
                                         </Card>
                                     )}
 
-                                    {/* Step 2: Payment */}
+                                    {/* Step 2: Extras (Add-ons) */}
                                     {currentStep === 2 && (
+                                        isExternalFlight ? (
+                                            <Card className="border-none shadow-lg rounded-[1.5rem] overflow-hidden bg-white dark:bg-slate-900" hoverEffect={false}>
+                                                <CardContent className="pt-8 pb-8">
+                                                    <div className="text-center">
+                                                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                                            <Sparkles className="w-8 h-8 text-slate-400" />
+                                                        </div>
+                                                        <h3 className="font-semibold text-lg mb-2">Add-ons Not Available</h3>
+                                                        <p className="text-slate-500 max-w-md mx-auto">
+                                                            Additional services for this flight are managed by the airline.
+                                                            You may add extras during online check-in.
+                                                        </p>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ) : (
+                                            <BookingAddons
+                                                flightId={flightId}
+                                                selectedAddons={selectedAddons}
+                                                onUpdate={handleAddonsUpdate}
+                                            />
+                                        )
+                                    )}
+
+                                    {/* Step 3: Payment (Review) */}
+                                    {currentStep === 3 && (
                                         <Card className="border-none shadow-lg rounded-[1.5rem] overflow-hidden bg-white dark:bg-slate-900" hoverEffect={false}>
                                             <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-6">
                                                 <div className="flex items-center gap-3">
@@ -469,6 +522,23 @@ function BookingForm() {
                                                         </div>
                                                     </div>
 
+                                                    {Object.keys(selectedAddons).length > 0 && (
+                                                        <div>
+                                                            <h4 className="font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Add-ons</h4>
+                                                            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-2">
+                                                                {Object.entries(selectedAddons).map(([id, qty]) => (
+                                                                    <div key={id} className="flex justify-between text-sm">
+                                                                        <span>Addon #{id} × {qty}</span>
+                                                                    </div>
+                                                                ))}
+                                                                <div className="border-t pt-2 mt-2 font-semibold flex justify-between">
+                                                                    <span>Subtotal</span>
+                                                                    <span>${addonsCost.toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
                                                         <p className="text-sm text-indigo-600 dark:text-indigo-400">
                                                             💳 Payment will be processed from your wallet balance after confirming the booking.
@@ -478,58 +548,26 @@ function BookingForm() {
                                             </CardContent>
                                         </Card>
                                     )}
-
-                                    {/* Step 3: Confirmation */}
-                                    {currentStep === 3 && (
-                                        <Card className="text-center py-12 border-none shadow-lg rounded-[1.5rem]" hoverEffect={false}>
-                                            <CardContent>
-                                                <motion.div
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    transition={{ type: "spring", stiffness: 200 }}
-                                                    className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
-                                                >
-                                                    <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
-                                                </motion.div>
-                                                <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
-                                                <p className="text-muted-foreground mb-8">
-                                                    Your booking has been successfully created. You will receive a confirmation email shortly.
-                                                </p>
-                                                <div className="flex gap-4 justify-center">
-                                                    {bookingId && (
-                                                        <Button onClick={() => router.push(`/bookings/${bookingId}/pay`)}>
-                                                            Proceed to Payment
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="outline" onClick={() => router.push('/dashboard/trips')}>
-                                                        View My Trips
-                                                    </Button>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
                                 </motion.div>
                             </AnimatePresence>
 
                             {/* Navigation Buttons */}
-                            {currentStep < 3 && (
-                                <div className="flex justify-between mt-8">
-                                    <Button
-                                        variant="outline"
-                                        onClick={prevStep}
-                                        disabled={currentStep === 0}
-                                        className="w-32"
-                                    >
-                                        <ChevronLeft className="w-4 h-4 mr-2" /> Back
-                                    </Button>
-                                    <Button
-                                        onClick={nextStep}
-                                        className="w-32"
-                                    >
-                                        {currentStep === 2 ? 'Confirm' : 'Next'} <ChevronRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                </div>
-                            )}
+                            <div className="flex justify-between mt-8">
+                                <Button
+                                    variant="outline"
+                                    onClick={prevStep}
+                                    disabled={currentStep === 0}
+                                    className="w-32"
+                                >
+                                    <ChevronLeft className="w-4 h-4 mr-2" /> Back
+                                </Button>
+                                <Button
+                                    onClick={nextStep}
+                                    className="w-32"
+                                >
+                                    {currentStep === 3 ? 'Confirm' : 'Next'} <ChevronRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Price Summary Sidebar */}
@@ -589,6 +627,12 @@ function BookingForm() {
                                             <span className="text-slate-400">Taxes & fees</span>
                                             <span>${taxes.toFixed(2)}</span>
                                         </div>
+                                        {addonsCost > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-400">Add-ons</span>
+                                                <span>${addonsCost.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between text-xl font-bold pt-2 text-indigo-300">
                                             <span>Total</span>
                                             <span>${totalPrice.toFixed(2)}</span>

@@ -1,0 +1,156 @@
+﻿   Ôû▓ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 14.2s
+   Running TypeScript ...
+   Collecting page data using 7 workers ...
+   Generating static pages using 7 workers (0/85) ...
+   Generating static pages using 7 workers (21/85) 
+   Generating static pages using 7 workers (42/85) 
+   Generating static pages using 7 workers (63/85) 
+ Ô£ô Generating static pages using 7 workers (85/85) in 4.8s
+   Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /_not-found
+Ôö£ ÔùÅ /[locale]
+Ôöé Ôö£ /en
+Ôöé Ôöö /ar
+Ôö£ ÔùÅ /[locale]/about
+Ôöé Ôö£ /en/about
+Ôöé Ôöö /ar/about
+Ôö£ ÔùÅ /[locale]/admin/airlines
+Ôöé Ôö£ /en/admin/airlines
+Ôöé Ôöö /ar/admin/airlines
+Ôö£ ãÆ /[locale]/admin/airlines/[id]/edit
+Ôö£ ÔùÅ /[locale]/admin/airlines/create
+Ôöé Ôö£ /en/admin/airlines/create
+Ôöé Ôöö /ar/admin/airlines/create
+Ôö£ ÔùÅ /[locale]/admin/airports
+Ôöé Ôö£ /en/admin/airports
+Ôöé Ôöö /ar/admin/airports
+Ôö£ ãÆ /[locale]/admin/airports/[id]/edit
+Ôö£ ÔùÅ /[locale]/admin/airports/create
+Ôöé Ôö£ /en/admin/airports/create
+Ôöé Ôöö /ar/admin/airports/create
+Ôö£ ÔùÅ /[locale]/admin/bookings
+Ôöé Ôö£ /en/admin/bookings
+Ôöé Ôöö /ar/admin/bookings
+Ôö£ ÔùÅ /[locale]/admin/dashboard
+Ôöé Ôö£ /en/admin/dashboard
+Ôöé Ôöö /ar/admin/dashboard
+Ôö£ ÔùÅ /[locale]/admin/flights
+Ôöé Ôö£ /en/admin/flights
+Ôöé Ôöö /ar/admin/flights
+Ôö£ ãÆ /[locale]/admin/flights/[id]/edit
+Ôö£ ÔùÅ /[locale]/admin/flights/create
+Ôöé Ôö£ /en/admin/flights/create
+Ôöé Ôöö /ar/admin/flights/create
+Ôö£ ÔùÅ /[locale]/admin/hotels
+Ôöé Ôö£ /en/admin/hotels
+Ôöé Ôöö /ar/admin/hotels
+Ôö£ ãÆ /[locale]/admin/hotels/[id]
+Ôö£ ÔùÅ /[locale]/admin/hotels/create
+Ôöé Ôö£ /en/admin/hotels/create
+Ôöé Ôöö /ar/admin/hotels/create
+Ôö£ ÔùÅ /[locale]/admin/promo-codes
+Ôöé Ôö£ /en/admin/promo-codes
+Ôöé Ôöö /ar/admin/promo-codes
+Ôö£ ÔùÅ /[locale]/admin/reviews
+Ôöé Ôö£ /en/admin/reviews
+Ôöé Ôöö /ar/admin/reviews
+Ôö£ ÔùÅ /[locale]/admin/suppliers
+Ôöé Ôö£ /en/admin/suppliers
+Ôöé Ôöö /ar/admin/suppliers
+Ôö£ ÔùÅ /[locale]/admin/users
+Ôöé Ôö£ /en/admin/users
+Ôöé Ôöö /ar/admin/users
+Ôö£ ÔùÅ /[locale]/blog
+Ôöé Ôö£ /en/blog
+Ôöé Ôöö /ar/blog
+Ôö£ ÔùÅ /[locale]/book
+Ôöé Ôö£ /en/book
+Ôöé Ôöö /ar/book
+Ôö£ ãÆ /[locale]/bookings/[id]/confirmation
+Ôö£ ãÆ /[locale]/bookings/[id]/pay
+Ôö£ ÔùÅ /[locale]/bookings/create
+Ôöé Ôö£ /en/bookings/create
+Ôöé Ôöö /ar/bookings/create
+Ôö£ ÔùÅ /[locale]/careers
+Ôöé Ôö£ /en/careers
+Ôöé Ôöö /ar/careers
+Ôö£ ÔùÅ /[locale]/contact
+Ôöé Ôö£ /en/contact
+Ôöé Ôöö /ar/contact
+Ôö£ ÔùÅ /[locale]/dashboard
+Ôöé Ôö£ /en/dashboard
+Ôöé Ôöö /ar/dashboard
+Ôö£ ÔùÅ /[locale]/dashboard/history
+Ôöé Ôö£ /en/dashboard/history
+Ôöé Ôöö /ar/dashboard/history
+Ôö£ ÔùÅ /[locale]/dashboard/hotel-bookings
+Ôöé Ôö£ /en/dashboard/hotel-bookings
+Ôöé Ôöö /ar/dashboard/hotel-bookings
+Ôö£ ÔùÅ /[locale]/dashboard/loyalty
+Ôöé Ôö£ /en/dashboard/loyalty
+Ôöé Ôöö /ar/dashboard/loyalty
+Ôö£ ÔùÅ /[locale]/dashboard/price-alerts
+Ôöé Ôö£ /en/dashboard/price-alerts
+Ôöé Ôöö /ar/dashboard/price-alerts
+Ôö£ ÔùÅ /[locale]/dashboard/profile
+Ôöé Ôö£ /en/dashboard/profile
+Ôöé Ôöö /ar/dashboard/profile
+Ôö£ ÔùÅ /[locale]/dashboard/settings
+Ôöé Ôö£ /en/dashboard/settings
+Ôöé Ôöö /ar/dashboard/settings
+Ôö£ ãÆ /[locale]/dashboard/tickets/[id]
+Ôö£ ÔùÅ /[locale]/dashboard/trips
+Ôöé Ôö£ /en/dashboard/trips
+Ôöé Ôöö /ar/dashboard/trips
+Ôö£ ÔùÅ /[locale]/dashboard/wallet
+Ôöé Ôö£ /en/dashboard/wallet
+Ôöé Ôöö /ar/dashboard/wallet
+Ôö£ ÔùÅ /[locale]/deals
+Ôöé Ôö£ /en/deals
+Ôöé Ôöö /ar/deals
+Ôö£ ÔùÅ /[locale]/flights
+Ôöé Ôö£ /en/flights
+Ôöé Ôöö /ar/flights
+Ôö£ ãÆ /[locale]/flights/[id]/packages
+Ôö£ ÔùÅ /[locale]/forgot-password
+Ôöé Ôö£ /en/forgot-password
+Ôöé Ôöö /ar/forgot-password
+Ôö£ ÔùÅ /[locale]/help
+Ôöé Ôö£ /en/help
+Ôöé Ôöö /ar/help
+Ôö£ ÔùÅ /[locale]/hotels
+Ôöé Ôö£ /en/hotels
+Ôöé Ôöö /ar/hotels
+Ôö£ ãÆ /[locale]/hotels/[id]
+Ôö£ ÔùÅ /[locale]/hotels/book
+Ôöé Ôö£ /en/hotels/book
+Ôöé Ôöö /ar/hotels/book
+Ôö£ ÔùÅ /[locale]/login
+Ôöé Ôö£ /en/login
+Ôöé Ôöö /ar/login
+Ôö£ ÔùÅ /[locale]/privacy
+Ôöé Ôö£ /en/privacy
+Ôöé Ôöö /ar/privacy
+Ôö£ ÔùÅ /[locale]/register
+Ôöé Ôö£ /en/register
+Ôöé Ôöö /ar/register
+Ôö£ ÔùÅ /[locale]/reset-password
+Ôöé Ôö£ /en/reset-password
+Ôöé Ôöö /ar/reset-password
+Ôöö ÔùÅ /[locale]/support
+  Ôö£ /en/support
+  Ôöö /ar/support
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ÔùÅ  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ãÆ  (Dynamic)  server-rendered on demand
+

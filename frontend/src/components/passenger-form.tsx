@@ -118,6 +118,9 @@ export const PassengerForm = React.forwardRef<PassengerFormRef, PassengerFormPro
         // Validate all fields
         const validate = (): { isValid: boolean; error?: string } => {
             const errors: string[] = []
+            const today = new Date()
+            const sixMonthsFromNow = new Date(today)
+            sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
 
             passengers.forEach((passenger, index) => {
                 const info = passengerTypes[index]
@@ -131,6 +134,44 @@ export const PassengerForm = React.forwardRef<PassengerFormRef, PassengerFormPro
                 }
                 if (!passenger.passportNumber.trim()) {
                     errors.push(`${label}: ${dir === 'rtl' ? 'رقم جواز السفر مطلوب' : 'Passport number is required'}`)
+                }
+
+                // Date of birth validation
+                if (!passenger.dob) {
+                    errors.push(`${label}: ${dir === 'rtl' ? 'تاريخ الميلاد مطلوب' : 'Date of birth is required'}`)
+                } else {
+                    const dob = new Date(passenger.dob)
+                    const age = Math.floor((today.getTime() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+                    // Validate age based on passenger type
+                    if (passenger.type === 'adult' && age < 12) {
+                        errors.push(`${label}: ${dir === 'rtl' ? 'يجب أن يكون عمر البالغ 12 سنة أو أكثر' : 'Adults must be 12 years or older'}`)
+                    } else if (passenger.type === 'child') {
+                        if (age < 2 || age > 11) {
+                            errors.push(`${label}: ${dir === 'rtl' ? 'يجب أن يتراوح عمر الطفل بين 2-11 سنة' : 'Children must be between 2-11 years old'}`)
+                        }
+                    } else if (passenger.type === 'infant') {
+                        if (age >= 2) {
+                            errors.push(`${label}: ${dir === 'rtl' ? 'يجب أن يكون عمر الرضيع أقل من سنتين' : 'Infants must be under 2 years old'}`)
+                        }
+                    }
+
+                    // Date of birth can't be in the future
+                    if (dob > today) {
+                        errors.push(`${label}: ${dir === 'rtl' ? 'تاريخ الميلاد لا يمكن أن يكون في المستقبل' : 'Date of birth cannot be in the future'}`)
+                    }
+                }
+
+                // Passport expiry validation (must be at least 6 months from today)
+                if (!passenger.passportExpiry) {
+                    errors.push(`${label}: ${dir === 'rtl' ? 'تاريخ انتهاء جواز السفر مطلوب' : 'Passport expiry date is required'}`)
+                } else {
+                    const expiryDate = new Date(passenger.passportExpiry)
+                    if (expiryDate < today) {
+                        errors.push(`${label}: ${dir === 'rtl' ? 'جواز السفر منتهي الصلاحية' : 'Passport has expired'}`)
+                    } else if (expiryDate < sixMonthsFromNow) {
+                        errors.push(`${label}: ${dir === 'rtl' ? 'يجب أن تكون صلاحية جواز السفر 6 أشهر على الأقل' : 'Passport must be valid for at least 6 months'}`)
+                    }
                 }
             })
 
@@ -152,6 +193,7 @@ export const PassengerForm = React.forwardRef<PassengerFormRef, PassengerFormPro
 
             return { isValid: true }
         }
+
 
         const getData = () => ({ passengers, contactInfo })
 

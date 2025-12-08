@@ -16,26 +16,33 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Create Admin User
-        $admin = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'role' => 'admin',
+            ]
+        );
 
         // 2. Create Regular User
-        $user = User::factory()->create([
-            'name' => 'Regular User',
-            'email' => 'user@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'user',
-        ]);
+        $user = User::firstOrCreate(
+            ['email' => 'user@example.com'],
+            [
+                'name' => 'Regular User',
+                'password' => bcrypt('password'),
+                'role' => 'user',
+            ]
+        );
 
         // 3. Create Real Airlines and Airports
-        $this->call(RealDataSeeder::class);
-        
-        // 4. Create Flights using the comprehensive FlightSeeder
-        $this->call(FlightSeeder::class);
+        $this->call([
+            SupplierSeeder::class,
+            RealDataSeeder::class,
+            IranianFlightsSeeder::class,
+            FlightSeeder::class,
+            HotelSeeder::class,
+        ]);
         
         // Get some flights for bookings
         $flights = Flight::take(10)->get();

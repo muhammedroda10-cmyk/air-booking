@@ -98,8 +98,8 @@ export default function HotelDetailsPage() {
                 {/* Hero Image */}
                 <div className="relative h-[50vh] w-full">
                     <Image
-                        src={hotel.image_url}
-                        alt={hotel.name}
+                        src={hotel.image_url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop"}
+                        alt={hotel.name || "Hotel Details"}
                         fill
                         className="object-cover"
                     />
@@ -147,7 +147,7 @@ export default function HotelDetailsPage() {
                             <Card className="p-8 rounded-[2rem] border-0 shadow-lg bg-white dark:bg-slate-900">
                                 <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Amenities</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {hotel.amenities.map((amenity) => (
+                                    {(hotel.amenities || []).map((amenity) => (
                                         <div key={amenity} className="flex items-center gap-2 text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
                                             {amenity === "wifi" && <Wifi className="w-4 h-4 text-primary" />}
                                             {amenity === "breakfast" && <Coffee className="w-4 h-4 text-primary" />}

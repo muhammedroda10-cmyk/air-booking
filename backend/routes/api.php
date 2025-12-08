@@ -18,6 +18,8 @@ Route::get('/flights/{flight}/packages', [\App\Http\Controllers\FlightPackageCon
 Route::get('/airports', [\App\Http\Controllers\AirportController::class, 'index']);
 Route::get('/airlines', [\App\Http\Controllers\AirlineController::class, 'index']);
 Route::get('/airlines/{airline}', [\App\Http\Controllers\AirlineController::class, 'show']);
+Route::get('/addons', [\App\Http\Controllers\AddonController::class, 'index']);
+
 
 
 // Hotel public routes
@@ -65,7 +67,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}/download', [\App\Http\Controllers\TicketController::class, 'download']);
 
     Route::post('/payments', [\App\Http\Controllers\PaymentController::class, 'store']);
+    Route::post('/bookings/{booking}/payment/intent', [\App\Http\Controllers\PaymentController::class, 'createPaymentIntent']);
+    Route::post('/bookings/{booking}/payment/confirm', [\App\Http\Controllers\PaymentController::class, 'confirmPayment']);
     Route::get('/payments/{bookingId}/status', [\App\Http\Controllers\PaymentController::class, 'status']);
+    Route::post('/bookings/{booking}/refund', [\App\Http\Controllers\PaymentController::class, 'refund']);
+
 
     Route::post('/hotel-bookings', [\App\Http\Controllers\HotelBookingController::class, 'store']);
     Route::get('/hotel-bookings', [\App\Http\Controllers\HotelBookingController::class, 'index']);
@@ -82,7 +88,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy']);
     Route::delete('/notifications', [\App\Http\Controllers\NotificationController::class, 'clearAll']);
 
+    // Price Alerts routes
+    Route::get('/price-alerts', [\App\Http\Controllers\PriceAlertController::class, 'index']);
+    Route::post('/price-alerts', [\App\Http\Controllers\PriceAlertController::class, 'store']);
+    Route::get('/price-alerts/{priceAlert}', [\App\Http\Controllers\PriceAlertController::class, 'show']);
+    Route::put('/price-alerts/{priceAlert}', [\App\Http\Controllers\PriceAlertController::class, 'update']);
+    Route::delete('/price-alerts/{priceAlert}', [\App\Http\Controllers\PriceAlertController::class, 'destroy']);
+    Route::post('/price-alerts/{priceAlert}/toggle', [\App\Http\Controllers\PriceAlertController::class, 'toggle']);
+    Route::post('/price-alerts/{priceAlert}/check', [\App\Http\Controllers\PriceAlertController::class, 'checkPrice']);
+
+    // Loyalty Program routes
+    Route::get('/loyalty', [\App\Http\Controllers\LoyaltyController::class, 'show']);
+    Route::get('/loyalty/transactions', [\App\Http\Controllers\LoyaltyController::class, 'transactions']);
+    Route::post('/loyalty/calculate', [\App\Http\Controllers\LoyaltyController::class, 'calculatePoints']);
+    Route::post('/loyalty/redeem', [\App\Http\Controllers\LoyaltyController::class, 'redeem']);
+    Route::get('/loyalty/tiers', [\App\Http\Controllers\LoyaltyController::class, 'tiers']);
+
     Route::middleware('admin')->group(function () {
+
         Route::apiResource('airports', \App\Http\Controllers\AirportController::class)->except(['index']);
         Route::apiResource('airlines', \App\Http\Controllers\AirlineController::class)->except(['index', 'show']);
         Route::apiResource('flights', \App\Http\Controllers\FlightController::class)->except(['index', 'show']);
