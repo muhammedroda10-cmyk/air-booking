@@ -12,13 +12,13 @@ interface UserLayoutProps {
 }
 
 const navItems = [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/dashboard/trips", label: "My Trips", icon: Plane },
-    { href: "/dashboard/hotel-bookings", label: "Hotels", icon: Building2 },
-    { href: "/dashboard/history", label: "History", icon: History },
-    { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
-    { href: "/dashboard/profile", label: "Profile", icon: User },
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
+    { href: "/account", label: "Overview", icon: LayoutDashboard },
+    { href: "/account/trips", label: "My Trips", icon: Plane },
+    { href: "/account/hotel-bookings", label: "Hotels", icon: Building2 },
+    { href: "/account/history", label: "History", icon: History },
+    { href: "/account/wallet", label: "Wallet", icon: Wallet },
+    { href: "/account/profile", label: "Profile", icon: User },
+    { href: "/account/settings", label: "Settings", icon: Settings },
 ]
 
 export function UserLayout({ children }: UserLayoutProps) {
@@ -55,7 +55,7 @@ export function UserLayout({ children }: UserLayoutProps) {
                         {navItems.map((item) => {
                             const Icon = item.icon
                             const isActive = currentPath === item.href ||
-                                (item.href !== '/dashboard' && currentPath.startsWith(item.href))
+                                (item.href !== '/account' && currentPath.startsWith(item.href))
 
                             return (
                                 <LocaleLink

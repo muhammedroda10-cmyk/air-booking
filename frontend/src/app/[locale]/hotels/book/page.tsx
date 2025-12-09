@@ -208,7 +208,7 @@ function HotelBookingContent() {
                                         Your stay at {hotel.name} has been booked successfully. A confirmation email has been sent to {guestEmail}.
                                     </p>
                                     <div className="flex justify-center gap-4">
-                                        <Button variant="outline" onClick={() => router.push('/dashboard')}>
+                                        <Button variant="outline" onClick={() => router.push('/account')}>
                                             View Booking
                                         </Button>
                                         <Button onClick={() => router.push('/')}>

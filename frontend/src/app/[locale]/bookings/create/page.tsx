@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Plane, Calendar, Clock, User, Armchair, Trash2, Plus, CreditCard, CheckCircle2, ChevronRight, ChevronLeft, Wallet, Sparkles } from "lucide-react"
+import { Plane, Calendar, Clock, User, Armchair, Trash2, Plus, CreditCard, CheckCircle2, ChevronRight, ChevronLeft, Wallet, Sparkles, Luggage, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { motion, AnimatePresence } from "framer-motion"
 import { StepIndicator } from "@/components/step-indicator"
-import { SeatMap } from "@/components/seat-map"
+import { MultiSegmentSeatMap } from "@/components/multi-segment-seat-map"
+import { BaggageSelector } from "@/components/baggage-selector"
 import { BookingAddons } from "@/components/booking-addons"
 import { useLanguage } from "@/context/language-context"
 
@@ -56,7 +57,13 @@ function BookingForm() {
 
     const [flight, setFlight] = useState<Flight | null>(null);
     const [passengers, setPassengers] = useState<Passenger[]>([]);
-    const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+    // Multi-segment seat selection: { segmentId: string[] }
+    const [selectedSeats, setSelectedSeats] = useState<{ [segmentId: string]: string[] }>({});
+    // Get segments from flight data (for round-trips we have outbound + return)
+    const [flightSegments, setFlightSegments] = useState<{ id: string; flightNumber?: string; origin: string; originCode: string; destination: string; destinationCode: string }[]>([]);
+    // Baggage selection: { passengerIdx: { segmentId: optionId } }
+    const [selectedBaggage, setSelectedBaggage] = useState<{ [passengerId: number]: { [segmentId: string]: string } }>({});
+    const [baggageCost, setBaggageCost] = useState(0);
     const [selectedAddons, setSelectedAddons] = useState<{ [key: number]: number }>({});
     const [addonsCost, setAddonsCost] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +72,7 @@ function BookingForm() {
 
     const steps = [
         t?.booking?.steps?.passengers || "Passengers",
-        t?.booking?.steps?.seats || "Seats",
+        t?.booking?.steps?.seats || "Seats & Baggage",
         t?.booking?.steps?.extras || "Extras",
         t?.booking?.steps?.payment || "Payment",
     ];
@@ -99,7 +106,38 @@ function BookingForm() {
     const fetchFlight = async () => {
         try {
             const response = await api.get(`/flights/${flightId}`);
-            setFlight(response.data.data || response.data);
+            const flightData = response.data.data || response.data;
+            setFlight(flightData);
+
+            // Build segments from flight data
+            // For round-trip external flights, we might have multiple segments
+            const segments = [];
+
+            // Check if this is an external offer with segments array
+            if (flightData.segments && Array.isArray(flightData.segments)) {
+                flightData.segments.forEach((seg: any, idx: number) => {
+                    segments.push({
+                        id: seg.id || `${flightId}_seg_${idx}`,
+                        flightNumber: seg.flight_number || seg.flightNumber,
+                        origin: seg.origin?.city || seg.origin_airport?.city || '',
+                        originCode: seg.origin?.code || seg.origin_airport?.code || '',
+                        destination: seg.destination?.city || seg.destination_airport?.city || '',
+                        destinationCode: seg.destination?.code || seg.destination_airport?.code || ''
+                    });
+                });
+            } else {
+                // Single segment (standard flight)
+                segments.push({
+                    id: flightId,
+                    flightNumber: flightData.flight_number,
+                    origin: flightData.origin_airport?.city || '',
+                    originCode: flightData.origin_airport?.code || '',
+                    destination: flightData.destination_airport?.city || '',
+                    destinationCode: flightData.destination_airport?.code || ''
+                });
+            }
+
+            setFlightSegments(segments);
         } catch (error) {
             console.error('Failed to fetch flight', error);
             setError('Failed to load flight details');
@@ -114,18 +152,23 @@ function BookingForm() {
         setPassengers(newPassengers);
     };
 
-    const handleSeatSelect = (seat: string) => {
-        if (selectedSeats.includes(seat)) {
-            setSelectedSeats(selectedSeats.filter(s => s !== seat));
-        } else if (selectedSeats.length < passengers.length) {
-            setSelectedSeats([...selectedSeats, seat]);
-        }
+    const handleSegmentSeatSelect = (segmentId: string, seats: string[]) => {
+        setSelectedSeats(prev => ({
+            ...prev,
+            [segmentId]: seats
+        }));
+    };
+
+    const handleBaggageUpdate = (baggage: { [passengerId: number]: { [segmentId: string]: string } }, totalCost: number) => {
+        setSelectedBaggage(baggage);
+        setBaggageCost(totalCost);
     };
 
     const handleAddonsUpdate = (addons: { [key: number]: number }, totalCost: number) => {
         setSelectedAddons(addons);
         setAddonsCost(totalCost);
     };
+
 
     const nextStep = async () => {
         if (currentStep === 0) {
@@ -192,7 +235,7 @@ function BookingForm() {
     const TAX_RATE = 0.10;
     const baseFare = (flight?.base_price || 0) * passengers.length;
     const taxes = baseFare * TAX_RATE;
-    const totalPrice = baseFare + taxes + addonsCost;
+    const totalPrice = baseFare + taxes + addonsCost + baggageCost;
 
     const formatTime = (dateStr: string) => {
         return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -410,41 +453,33 @@ function BookingForm() {
                                         </Card>
                                     )}
 
-                                    {/* Step 1: Seat Selection */}
+                                    {/* Step 1: Seat Selection & Baggage */}
                                     {currentStep === 1 && (
-                                        <Card className="border-none shadow-lg rounded-[1.5rem] overflow-hidden bg-white dark:bg-slate-900" hoverEffect={false}>
-                                            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                        <Armchair className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div>
-                                                        <CardTitle className="text-xl">Select Your Seats</CardTitle>
-                                                        <CardDescription>Choose {passengers.length} seat(s) for your passengers</CardDescription>
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="pt-6">
-                                                <>
-                                                    <div className="mb-4">
-                                                        <p className="text-sm text-slate-500">
-                                                            Selected: <span className="font-bold text-primary">{selectedSeats.length}/{passengers.length}</span>
-                                                            {selectedSeats.length > 0 && (
-                                                                <span className="ml-2">
-                                                                    ({selectedSeats.join(', ')})
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <SeatMap
-                                                        flightId={flightId}
-                                                        selectedSeats={selectedSeats}
-                                                        onSelect={handleSeatSelect}
-                                                        maxSeats={passengers.length}
+                                        <div className="space-y-8">
+                                            {/* Seat Selection */}
+                                            <MultiSegmentSeatMap
+                                                segments={flightSegments}
+                                                passengerCount={passengers.length}
+                                                selectedSeats={selectedSeats}
+                                                onSeatSelect={handleSegmentSeatSelect}
+                                            />
+
+                                            {/* Baggage Selection */}
+                                            <Card className="border-none shadow-lg rounded-[1.5rem] overflow-hidden bg-white dark:bg-slate-900" hoverEffect={false}>
+                                                <CardContent className="pt-6">
+                                                    <BaggageSelector
+                                                        passengerCount={passengers.length}
+                                                        segments={flightSegments.map(seg => ({
+                                                            id: seg.id,
+                                                            origin: seg.originCode,
+                                                            destination: seg.destinationCode
+                                                        }))}
+                                                        selectedBaggage={selectedBaggage}
+                                                        onUpdate={handleBaggageUpdate}
                                                     />
-                                                </>
-                                            </CardContent>
-                                        </Card>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
                                     )}
 
                                     {/* Step 2: Extras (Add-ons) */}
@@ -497,17 +532,52 @@ function BookingForm() {
 
                                                 {/* Booking Summary */}
                                                 <div className="space-y-6">
+                                                    {/* Passengers & Seats */}
                                                     <div>
-                                                        <h4 className="font-semibold mb-3">Passengers</h4>
-                                                        <div className="space-y-2">
+                                                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                                            <User className="w-4 h-4 text-primary" /> Passengers & Seats
+                                                        </h4>
+                                                        <div className="space-y-3">
                                                             {passengers.map((p, i) => (
-                                                                <div key={i} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                                                                    <span>{`${p.first_name} ${p.last_name}`.trim() || `Passenger ${i + 1}`}</span>
-                                                                    <Badge>{selectedSeats[i] || 'No seat'}</Badge>
+                                                                <div key={i} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                                                    <div className="flex justify-between items-center mb-2">
+                                                                        <span className="font-medium">{`${p.first_name} ${p.last_name}`.trim() || `Passenger ${i + 1}`}</span>
+                                                                    </div>
+                                                                    {flightSegments.length > 0 && (
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {flightSegments.map((seg, segIdx) => {
+                                                                                const seats = selectedSeats[seg.id] || [];
+                                                                                const seat = seats[i];
+                                                                                return (
+                                                                                    <div key={seg.id} className="text-xs flex items-center gap-1">
+                                                                                        <span className="text-muted-foreground">{seg.originCode}→{seg.destinationCode}:</span>
+                                                                                        <Badge variant={seat ? "default" : "secondary"} className="text-xs">
+                                                                                            {seat || 'Auto'}
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                         </div>
                                                     </div>
+
+                                                    {/* Baggage Summary */}
+                                                    {baggageCost > 0 && (
+                                                        <div>
+                                                            <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                                                <Luggage className="w-4 h-4 text-primary" /> Baggage
+                                                            </h4>
+                                                            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                                                <div className="flex justify-between text-sm font-semibold">
+                                                                    <span>Extra baggage</span>
+                                                                    <span>${baggageCost.toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
 
                                                     {Object.keys(selectedAddons).length > 0 && (
                                                         <div>
@@ -614,6 +684,14 @@ function BookingForm() {
                                             <span className="text-slate-400">Taxes & fees</span>
                                             <span>${taxes.toFixed(2)}</span>
                                         </div>
+                                        {baggageCost > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-400 flex items-center gap-1">
+                                                    <Luggage className="w-3 h-3" /> Baggage
+                                                </span>
+                                                <span>${baggageCost.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                         {addonsCost > 0 && (
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-slate-400">Add-ons</span>

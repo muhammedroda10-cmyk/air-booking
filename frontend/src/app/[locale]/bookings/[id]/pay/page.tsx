@@ -373,13 +373,13 @@ export default function PaymentPage() {
                                         <Button
                                             variant="outline"
                                             className="flex-1"
-                                            onClick={() => router.push(`/dashboard/tickets/${booking.id}`)}
+                                            onClick={() => router.push(`/account/tickets/${booking.id}`)}
                                         >
                                             View Ticket
                                         </Button>
                                         <Button
                                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                                            onClick={() => router.push('/dashboard/trips')}
+                                            onClick={() => router.push('/account/trips')}
                                         >
                                             My Trips
                                         </Button>
@@ -516,7 +516,7 @@ export default function PaymentPage() {
                                                         You need ${(Number(booking.total_price) - Number(walletBalance)).toFixed(2)} more to pay with wallet.
                                                         Please deposit funds or use a card.
                                                     </p>
-                                                    <Button variant="outline" className="mt-3 bg-white" onClick={() => router.push('/dashboard/wallet')}>
+                                                    <Button variant="outline" className="mt-3 bg-white" onClick={() => router.push('/account/wallet')}>
                                                         Go to Wallet
                                                     </Button>
                                                 </div>

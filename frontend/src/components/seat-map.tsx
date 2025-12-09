@@ -80,9 +80,10 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
         React.useEffect(() => {
             if (!flightId) return
 
-            // Detect if this is an API offer ID (string like "duffel_xxx" or "off_xxx")
+            // Detect if this is an API offer ID (string like "duffel_xxx", "amadeus_xxx", or "off_xxx")
             const flightIdStr = String(flightId)
             const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('amadeus_') ||
                 flightIdStr.startsWith('off_') ||
                 flightIdStr.startsWith('database_')
 
@@ -122,6 +123,10 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
                 if (offerId.startsWith('duffel_')) {
                     actualOfferId = offerId.replace('duffel_', '')
                     supplier = 'duffel'
+                } else if (offerId.startsWith('amadeus_')) {
+                    // Keep the full amadeus offer ID - backend expects it
+                    actualOfferId = offerId
+                    supplier = 'amadeus'
                 } else if (offerId.startsWith('database_')) {
                     // Database offers don't have external seat maps
                     setError(dir === 'rtl' ? 'اختيار المقعد غير متاح لهذه الرحلة' : 'Seat selection is handled at check-in for this flight')
@@ -134,7 +139,24 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
                 })
 
                 if (response.data.success) {
-                    setSeats(response.data.seats || [])
+                    let seatData = response.data.seats || []
+
+                    // Amadeus returns seats grouped by segments, flatten them
+                    if (supplier === 'amadeus' && Array.isArray(seatData) && seatData.length > 0) {
+                        // Check if it's segment-based format (has 'segment_id' and nested 'seats')
+                        if (seatData[0]?.segment_id !== undefined && seatData[0]?.seats) {
+                            // Flatten all segments' seats into one array
+                            // For now, use the first segment's seats
+                            seatData = seatData[0].seats.map((s: { seat_number: string; is_available: boolean; class: string; price?: { amount: number } }) => ({
+                                id: s.seat_number,
+                                status: s.is_available ? 'available' : 'occupied',
+                                class: s.class || 'economy',
+                                price: s.price?.amount || 0
+                            }))
+                        }
+                    }
+
+                    setSeats(seatData)
                 } else {
                     setError(response.data.error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد' : 'No seat data available'))
                 }
@@ -149,6 +171,7 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
         const fetchSeats = async () => {
             const flightIdStr = String(flightId)
             const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('amadeus_') ||
                 flightIdStr.startsWith('off_') ||
                 flightIdStr.startsWith('database_')
 
@@ -216,30 +239,78 @@ export const SeatMap = React.forwardRef<SeatMapRef, SeatMapProps>(
             // Detect if this is an external/API flight
             const flightIdStr = String(flightId)
             const isApiOffer = flightIdStr.startsWith('duffel_') ||
+                flightIdStr.startsWith('amadeus_') ||
                 flightIdStr.startsWith('off_') ||
                 flightIdStr.startsWith('database_')
 
             return (
-                <Card className="min-h-[200px] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 border-dashed p-8 text-center">
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mb-4 flex items-center justify-center">
-                        <Armchair className="w-8 h-8 text-slate-400" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">
-                        {dir === 'rtl' ? 'اختيار المقاعد غير متاح حالياً' : 'Seat Selection Not Available'}
-                    </h3>
-                    <p className="text-muted-foreground max-w-md mb-4">
-                        {isApiOffer
-                            ? (dir === 'rtl'
-                                ? 'سيتم اختيار المقاعد أثناء تسجيل الوصول عبر الإنترنت أو في المطار. يمكنك المتابعة للخطوة التالية.'
-                                : 'Seats for this flight will be assigned during online check-in or at the airport. You can proceed to the next step.')
-                            : (error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد' : 'No seat data available'))
-                        }
-                    </p>
-                    {!isApiOffer && (
-                        <button onClick={fetchSeats} className="text-primary hover:underline text-sm">
-                            {dir === 'rtl' ? 'إعادة المحاولة' : 'Retry'}
-                        </button>
-                    )}
+                <Card className="overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                        <CardTitle className="flex items-center gap-2">
+                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <Armchair className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                                <span>{dir === 'rtl' ? 'اختيار المقاعد' : 'Select Your Seats'}</span>
+                                <p className="text-sm font-normal text-muted-foreground mt-0.5">
+                                    {dir === 'rtl' ? `اختر ${maxSeats} مقعد لركابك` : `Choose ${maxSeats} seat(s) for your passengers`}
+                                </p>
+                            </div>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="min-h-[300px] flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 p-8 text-center">
+                            {/* Decorative seat grid pattern */}
+                            <div className="absolute opacity-5 pointer-events-none">
+                                <div className="grid grid-cols-6 gap-2">
+                                    {Array.from({ length: 24 }).map((_, i) => (
+                                        <div key={i} className="w-6 h-6 bg-slate-400 rounded-t-lg" />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="relative z-10">
+                                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-full mb-6 flex items-center justify-center shadow-inner">
+                                    <Armchair className="w-10 h-10 text-slate-400" />
+                                </div>
+
+                                <h3 className="font-semibold text-xl mb-3">
+                                    {dir === 'rtl' ? 'اختيار المقاعد غير متاح حالياً' : 'Seat Selection Not Available'}
+                                </h3>
+
+                                <p className="text-muted-foreground max-w-sm mb-6 leading-relaxed">
+                                    {isApiOffer
+                                        ? (dir === 'rtl'
+                                            ? 'سيتم تخصيص المقاعد أثناء تسجيل الوصول عبر الإنترنت أو في المطار. يمكنك المتابعة دون اختيار المقاعد.'
+                                            : 'Seats will be assigned during online check-in or at the airport. You can proceed without seat selection.')
+                                        : (error || (dir === 'rtl' ? 'لا توجد بيانات للمقاعد متاحة' : 'No seat data available'))
+                                    }
+                                </p>
+
+                                {isApiOffer ? (
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-full">
+                                            <Check className="w-4 h-4" />
+                                            <span>{dir === 'rtl' ? 'يمكنك المتابعة' : 'You can continue'}</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            {dir === 'rtl'
+                                                ? 'اضغط على "التالي" للمتابعة'
+                                                : 'Click "Next" to proceed with your booking'}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={fetchSeats}
+                                        className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                                    >
+                                        <Loader2 className="w-4 h-4" />
+                                        {dir === 'rtl' ? 'إعادة المحاولة' : 'Try Again'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
                 </Card>
             )
         }

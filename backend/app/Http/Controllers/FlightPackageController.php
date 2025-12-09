@@ -22,13 +22,14 @@ class FlightPackageController extends Controller
             return $this->getLocalFlightPackages($flight);
         }
 
-        // Handle external supplier flight
+        // Handle external supplier flight (e.g., amadeus_1_0)
         if (str_contains($flightId, '_')) {
-            [$supplierCode, $refId] = explode('_', $flightId, 2);
+            [$supplierCode] = explode('_', $flightId, 2);
 
             try {
                 $supplier = $supplierManager->driver($supplierCode);
-                $offer = $supplier->getOfferDetails($refId);
+                // Pass the full flightId since offers are cached by their complete ID
+                $offer = $supplier->getOfferDetails($flightId);
 
                 if ($offer) {
                     return $this->getExternalFlightPackages($offer);

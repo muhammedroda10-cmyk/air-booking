@@ -182,7 +182,7 @@ export default function HistoryPage() {
                                                 <p className="text-muted-foreground text-xs">{booking.flight ? format(new Date(booking.flight.departure_time), 'MMM d, yyyy') : 'N/A'}</p>
                                                 <p className="font-bold">${booking.total_price}</p>
                                             </div>
-                                            <Link href={`/dashboard/tickets/${booking.id}`}>
+                                            <Link href={`/account/tickets/${booking.id}`}>
                                                 <Button size="sm" variant="outline">View</Button>
                                             </Link>
                                         </div>

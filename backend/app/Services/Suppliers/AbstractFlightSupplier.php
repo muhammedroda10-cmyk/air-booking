@@ -41,7 +41,12 @@ abstract class AbstractFlightSupplier implements FlightSupplierInterface
         $client = Http::timeout($this->config['timeout'] ?? 30)
             ->retry(
                 $this->config['retry_times'] ?? 3,
-                $this->config['retry_delay'] ?? 100
+                $this->config['retry_delay'] ?? 100,
+                function ($exception, $request) {
+                    // Only retry on server errors and timeouts, not on client errors (4xx)
+                    return $exception instanceof \Illuminate\Http\Client\ConnectionException;
+                },
+                throw: false // Don't throw on final failure
             )
             ->withHeaders($this->getDefaultHeaders());
 

@@ -55,14 +55,15 @@ return [
             'retry_delay' => 200, // milliseconds
         ],
 
-        // Future suppliers can be added here
-        // 'amadeus' => [
-        //     'driver' => 'amadeus',
-        //     'base_url' => env('AMADEUS_API_URL', 'https://api.amadeus.com'),
-        //     'client_id' => env('AMADEUS_CLIENT_ID'),
-        //     'client_secret' => env('AMADEUS_CLIENT_SECRET'),
-        //     'timeout' => 30,
-        // ],
+        'amadeus' => [
+            'driver' => 'amadeus',
+            'base_url' => env('AMADEUS_API_URL', 'https://test.api.amadeus.com'),
+            'client_id' => env('AMADEUS_CLIENT_ID'),
+            'client_secret' => env('AMADEUS_CLIENT_SECRET'),
+            'timeout' => 30,
+            'retry_times' => 2,
+            'retry_delay' => 200, // milliseconds
+        ],
     ],
 
     /*

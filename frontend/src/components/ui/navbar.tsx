@@ -101,38 +101,38 @@ export function Navbar() {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard" className="cursor-pointer">
+                                        <LocaleLink href="/account" className="cursor-pointer">
                                             <LayoutDashboard className="w-4 h-4 mr-2" />
-                                            {t.nav.dashboard || 'Dashboard'}
+                                            {t.nav.dashboard || 'My Account'}
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard/trips" className="cursor-pointer">
+                                        <LocaleLink href="/account/trips" className="cursor-pointer">
                                             <Plane className="w-4 h-4 mr-2" />
                                             My Trips
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard/history" className="cursor-pointer">
+                                        <LocaleLink href="/account/history" className="cursor-pointer">
                                             <Clock className="w-4 h-4 mr-2" />
                                             History
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard/wallet" className="cursor-pointer">
+                                        <LocaleLink href="/account/wallet" className="cursor-pointer">
                                             <Wallet className="w-4 h-4 mr-2" />
                                             {t.nav.wallet || 'Wallet'}
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard/profile" className="cursor-pointer">
+                                        <LocaleLink href="/account/profile" className="cursor-pointer">
                                             <User className="w-4 h-4 mr-2" />
                                             Profile
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/dashboard/settings" className="cursor-pointer">
+                                        <LocaleLink href="/account/settings" className="cursor-pointer">
                                             <Settings className="w-4 h-4 mr-2" />
                                             {t.nav.settings || 'Settings'}
                                         </LocaleLink>

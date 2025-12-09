@@ -7,6 +7,7 @@ use App\Models\Supplier;
 use App\Services\Suppliers\FlightBufferSupplier;
 use App\Services\Suppliers\DatabaseSupplier;
 use App\Services\Suppliers\DuffelSupplier;
+use App\Services\Suppliers\AmadeusSupplier;
 use InvalidArgumentException;
 
 class FlightSupplierManager
@@ -28,9 +29,7 @@ class FlightSupplierManager
         'database' => DatabaseSupplier::class,
         'flightbuffer' => FlightBufferSupplier::class,
         'duffel' => DuffelSupplier::class,
-        // Add more drivers here as they are implemented
-        // 'amadeus' => AmadeusSupplier::class,
-        // 'sabre' => SabreSupplier::class,
+        'amadeus' => AmadeusSupplier::class,
     ];
 
     /**

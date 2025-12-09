@@ -52,6 +52,26 @@ class SupplierSeeder extends Seeder
             ]
         );
 
+        // Amadeus supplier
+        Supplier::updateOrCreate(
+            ['code' => 'amadeus'],
+            [
+                'name' => 'Amadeus',
+                'driver' => 'amadeus',
+                'api_base_url' => config('suppliers.suppliers.amadeus.base_url', 'https://test.api.amadeus.com'),
+                'api_key' => config('suppliers.suppliers.amadeus.client_id'),
+                'api_secret' => config('suppliers.suppliers.amadeus.client_secret'),
+                'is_active' => true,
+                'priority' => 85,
+                'timeout' => 30,
+                'retry_times' => 2,
+                'config' => [
+                    'test_mode' => env('AMADEUS_TEST_MODE', true),
+                    'oauth2' => true,
+                ],
+            ]
+        );
+
         // Database supplier (local flights from database)
         Supplier::updateOrCreate(
             ['code' => 'database'],

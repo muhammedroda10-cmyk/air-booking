@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
@@ -147,28 +147,28 @@ export default function TicketPage() {
 
     if (loading) {
         return (
-            <DashboardLayout>
+            <UserLayout>
                 <div className="max-w-4xl mx-auto space-y-6">
                     <Skeleton className="h-12 w-48" />
                     <Skeleton className="h-[700px] w-full rounded-2xl" />
                 </div>
-            </DashboardLayout>
+            </UserLayout>
         );
     }
 
     if (!booking) {
         return (
-            <DashboardLayout>
+            <UserLayout>
                 <div className="text-center py-12">
                     <h2 className="text-2xl font-bold">Booking not found</h2>
                     <p className="text-muted-foreground">The requested ticket could not be loaded.</p>
                 </div>
-            </DashboardLayout>
+            </UserLayout>
         );
     }
 
     return (
-        <DashboardLayout>
+        <UserLayout>
             <div className="max-w-4xl mx-auto print:max-w-none print:mx-0">
                 {/* Header Actions */}
                 <div className="flex justify-between items-center mb-8 print:hidden">
@@ -386,6 +386,6 @@ export default function TicketPage() {
                     </Card>
                 </motion.div>
             </div>
-        </DashboardLayout>
+        </UserLayout>
     );
 }

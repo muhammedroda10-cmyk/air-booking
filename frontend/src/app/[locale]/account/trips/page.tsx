@@ -187,7 +187,7 @@ export default function TripsPage() {
                                         <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-2">
                                             <p className="text-lg font-bold">${booking.total_price}</p>
                                             <div className="flex gap-2">
-                                                <Link href={`/dashboard/tickets/${booking.id}`}>
+                                                <Link href={`/account/tickets/${booking.id}`}>
                                                     <Button variant="outline" size="sm">Ticket</Button>
                                                 </Link>
                                                 <AlertDialog>

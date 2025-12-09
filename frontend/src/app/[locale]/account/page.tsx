@@ -17,7 +17,7 @@ interface Booking {
     total_price: number;
     status: string;
     created_at: string;
-    flight: {
+    flight?: {
         flight_number: string;
         departure_time: string;
         arrival_time: string;
@@ -25,9 +25,19 @@ interface Booking {
         origin_airport: { code: string; city: string };
         destination_airport: { code: string; city: string };
     };
+    flight_details?: {
+        origin: string;
+        origin_city: string;
+        destination: string;
+        destination_city: string;
+        departure_datetime: string;
+        arrival_datetime: string;
+        airline: string;
+        flight_number: string;
+    };
 }
 
-export default function DashboardPage() {
+export default function AccountPage() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -45,8 +55,28 @@ export default function DashboardPage() {
         fetchBookings()
     }, [])
 
-    const upcomingBookings = bookings.filter(b => b.flight && new Date(b.flight.departure_time) > new Date() && b.status !== 'cancelled')
-    const nextTrip = upcomingBookings.sort((a, b) => new Date(a.flight.departure_time).getTime() - new Date(b.flight.departure_time).getTime())[0]
+    // Helper functions to get flight data from either structure
+    const getRouteDisplay = (booking: Booking) => {
+        if (booking.flight?.origin_airport?.code && booking.flight?.destination_airport?.code) {
+            return `${booking.flight.origin_airport.code} → ${booking.flight.destination_airport.code}`;
+        }
+        if (booking.flight_details?.origin && booking.flight_details?.destination) {
+            return `${booking.flight_details.origin} → ${booking.flight_details.destination}`;
+        }
+        return booking.pnr || 'N/A';
+    };
+
+    const getDepartureTime = (booking: Booking) => {
+        return booking.flight?.departure_time || booking.flight_details?.departure_datetime || booking.created_at;
+    };
+
+    const upcomingBookings = bookings.filter(b => {
+        const depTime = getDepartureTime(b);
+        return depTime && new Date(depTime) > new Date() && b.status !== 'cancelled';
+    });
+    const nextTrip = upcomingBookings.sort((a, b) =>
+        new Date(getDepartureTime(a)).getTime() - new Date(getDepartureTime(b)).getTime()
+    )[0];
 
     if (loading) {
         return (
@@ -84,7 +114,7 @@ export default function DashboardPage() {
                         icon={<Calendar className="w-5 h-5 text-indigo-600" />}
                         className="bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-900/20"
                     />
-                    <Link href="/dashboard/wallet">
+                    <Link href="/account/wallet">
                         <StatsCard
                             title="Wallet Balance"
                             value="View Wallet"
@@ -108,25 +138,25 @@ export default function DashboardPage() {
                                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                                         <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-start">
                                             <div className="text-center md:text-left">
-                                                <p className="text-3xl font-bold mb-1">{nextTrip.flight.origin_airport.code}</p>
-                                                <p className="text-sm text-slate-300">{nextTrip.flight.origin_airport.city}</p>
+                                                <p className="text-3xl font-bold mb-1">{nextTrip.flight?.origin_airport?.code || nextTrip.flight_details?.origin || '---'}</p>
+                                                <p className="text-sm text-slate-300">{nextTrip.flight?.origin_airport?.city || nextTrip.flight_details?.origin_city || ''}</p>
                                             </div>
                                             <div className="flex flex-col items-center gap-2">
                                                 <Plane className="w-5 h-5 text-primary rotate-90" />
                                                 <div className="h-px w-16 bg-slate-600 border-t border-dashed border-slate-400" />
                                             </div>
                                             <div className="text-center md:text-right">
-                                                <p className="text-3xl font-bold mb-1">{nextTrip.flight.destination_airport.code}</p>
-                                                <p className="text-sm text-slate-300">{nextTrip.flight.destination_airport.city}</p>
+                                                <p className="text-3xl font-bold mb-1">{nextTrip.flight?.destination_airport?.code || nextTrip.flight_details?.destination || '---'}</p>
+                                                <p className="text-sm text-slate-300">{nextTrip.flight?.destination_airport?.city || nextTrip.flight_details?.destination_city || ''}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col md:items-end gap-2 text-center md:text-right">
-                                            <p className="text-base font-medium">{formatDate(nextTrip.flight.departure_time)}</p>
+                                            <p className="text-base font-medium">{formatDate(getDepartureTime(nextTrip))}</p>
                                             <p className="text-sm text-slate-300">
-                                                {nextTrip.flight.flight_number} • {nextTrip.flight.airline.name}
+                                                {nextTrip.flight?.flight_number || nextTrip.flight_details?.flight_number || nextTrip.pnr} • {nextTrip.flight?.airline?.name || nextTrip.flight_details?.airline || 'Airline'}
                                             </p>
-                                            <Link href={`/dashboard/tickets/${nextTrip.id}`}>
+                                            <Link href={`/account/tickets/${nextTrip.id}`}>
                                                 <Button variant="secondary" size="sm" className="mt-2">View Ticket</Button>
                                             </Link>
                                         </div>
@@ -154,7 +184,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold tracking-tight">Recent Bookings</h2>
-                        <Link href="/dashboard/history">
+                        <Link href="/account/history">
                             <Button variant="ghost" size="sm">
                                 View All <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
@@ -166,7 +196,7 @@ export default function DashboardPage() {
                             <div className="divide-y">
                                 {bookings.slice(0, 4).length > 0 ? (
                                     bookings.slice(0, 4).map((booking) => (
-                                        <Link key={booking.id} href={`/dashboard/tickets/${booking.id}`}>
+                                        <Link key={booking.id} href={`/account/tickets/${booking.id}`}>
                                             <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
@@ -175,14 +205,14 @@ export default function DashboardPage() {
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-0.5">
                                                             <span className="font-semibold text-sm">
-                                                                {booking.flight ? `${booking.flight.origin_airport.code} → ${booking.flight.destination_airport.code}` : 'N/A'}
+                                                                {getRouteDisplay(booking)}
                                                             </span>
                                                             <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'} className="uppercase text-[10px]">
                                                                 {booking.status}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {booking.flight ? formatDate(booking.flight.departure_time) : formatDate(booking.created_at)}
+                                                            {formatDate(getDepartureTime(booking))}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -202,7 +232,7 @@ export default function DashboardPage() {
                     </Card>
                 </div>
             </div>
-        </UserLayout>
+        </UserLayout >
     )
 }
 

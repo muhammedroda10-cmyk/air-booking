@@ -288,9 +288,9 @@ export default function ConfirmationPage({ params }: { params: Promise<{ id: str
                                 {isDownloading ? 'Downloading...' : 'Download Ticket'}
                             </Button>
                             <Button className="w-full sm:w-auto gap-2 h-11 bg-primary hover:bg-primary/90" asChild>
-                                <Link href="/dashboard">
+                                <Link href="/account">
                                     <Home className="w-4 h-4" />
-                                    Go to Dashboard
+                                    Go to My Account
                                 </Link>
                             </Button>
                         </CardFooter>

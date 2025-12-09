@@ -16,10 +16,19 @@ Route::get('/flights/{flight}', [\App\Http\Controllers\FlightController::class, 
 Route::get('/flights/{flight}/seats', [\App\Http\Controllers\SeatController::class, 'index']);
 Route::get('/offers/seats', [\App\Http\Controllers\SeatController::class, 'showOfferSeats']);
 Route::get('/flights/{flight}/packages', [\App\Http\Controllers\FlightPackageController::class, 'index']);
+
+// Amadeus API endpoints (Location search, Airline lookup, Pricing, Order management)
+Route::get('/locations/search', [\App\Http\Controllers\AmadeusController::class, 'searchLocations']);
+Route::get('/airlines/lookup/{code}', [\App\Http\Controllers\AmadeusController::class, 'getAirline']);
+Route::post('/flights/price', [\App\Http\Controllers\AmadeusController::class, 'priceOffer']);
+Route::get('/flights/orders/{orderId}', [\App\Http\Controllers\AmadeusController::class, 'getOrder']);
+Route::delete('/flights/orders/{orderId}', [\App\Http\Controllers\AmadeusController::class, 'cancelOrder']);
+
 Route::get('/airports', [\App\Http\Controllers\AirportController::class, 'index']);
 Route::get('/airlines', [\App\Http\Controllers\AirlineController::class, 'index']);
 Route::get('/airlines/{airline}', [\App\Http\Controllers\AirlineController::class, 'show']);
 Route::get('/addons', [\App\Http\Controllers\AddonController::class, 'index']);
+
 
 
 

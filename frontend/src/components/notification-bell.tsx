@@ -201,7 +201,7 @@ export function NotificationBell() {
                     </div>
 
                     <div className="p-2 border-t">
-                        <Link href="/dashboard/notifications" onClick={() => setIsOpen(false)}>
+                        <Link href="/account/notifications" onClick={() => setIsOpen(false)}>
                             <Button variant="ghost" className="w-full" size="sm">
                                 View all notifications
                             </Button>

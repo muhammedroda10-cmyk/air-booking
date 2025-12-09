@@ -70,7 +70,7 @@ class SeatController extends Controller
     }
 
     /**
-     * Get seat map for an API offer (Duffel, FlightBuffer, etc.)
+     * Get seat map for an API offer (Duffel, Amadeus, FlightBuffer, etc.)
      */
     public function showOfferSeats(Request $request, FlightSupplierManager $supplierManager)
     {
@@ -85,38 +85,33 @@ class SeatController extends Controller
             ], 400);
         }
 
-        // Route to the appropriate supplier
-        if ($supplier === 'duffel') {
-            $duffelSupplier = $supplierManager->driver('duffel');
-
-            if (!$duffelSupplier) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Duffel supplier not configured',
-                    'seats' => []
-                ], 503);
-            }
-
-            $result = $duffelSupplier->getSeatMap($offerId);
-
-            return response()->json([
-                'success' => $result['success'],
-                'error' => $result['error'] ?? null,
-                'seats' => $result['seats'] ?? [],
-                'offer_id' => $offerId,
-                'supplier' => $supplier,
-                'debug' => [
-                    'segments_count' => isset($result['raw_data']) ? count($result['raw_data']) : 0,
-                    'has_raw_data' => isset($result['raw_data']) && !empty($result['raw_data']),
-                ],
-            ]);
+        // Detect supplier from offerId if not explicitly provided
+        if (str_starts_with($offerId, 'amadeus_')) {
+            $supplier = 'amadeus';
         }
 
-        // For other suppliers that don't support seat selection
+        // Get the supplier driver
+        try {
+            $supplierDriver = $supplierManager->driver($supplier);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => "{$supplier} supplier not configured: " . $e->getMessage(),
+                'seats' => []
+            ], 503);
+        }
+
+        // Get seat map from supplier
+        $result = $supplierDriver->getSeatMap($offerId);
+
         return response()->json([
-            'success' => false,
-            'error' => "Seat selection not available for supplier: {$supplier}",
-            'seats' => []
-        ], 400);
+            'success' => $result['success'] ?? false,
+            'error' => $result['error'] ?? null,
+            'seats' => $result['seats'] ?? [],
+            'offer_id' => $offerId,
+            'supplier' => $supplier,
+            'dictionaries' => $result['dictionaries'] ?? null,
+        ]);
     }
+
 }

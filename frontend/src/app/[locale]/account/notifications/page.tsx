@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,16 +109,16 @@ export default function NotificationsPage() {
 
     if (loading) {
         return (
-            <DashboardLayout>
+            <UserLayout>
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-            </DashboardLayout>
+            </UserLayout>
         );
     }
 
     return (
-        <DashboardLayout>
+        <UserLayout>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
@@ -234,6 +234,6 @@ export default function NotificationsPage() {
                     </CardContent>
                 </Card>
             </div>
-        </DashboardLayout>
+        </UserLayout>
     );
 }

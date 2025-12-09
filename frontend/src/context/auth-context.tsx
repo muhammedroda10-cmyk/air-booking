@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         setUser(user);
-        router.push(user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+        router.push(user.role === 'admin' ? '/admin/dashboard' : '/account');
     };
 
     const logout = async () => {

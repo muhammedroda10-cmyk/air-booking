@@ -226,7 +226,7 @@ export const PaymentForm = React.forwardRef<PaymentFormRef, PaymentFormProps>(
                             )}
                             {hasInsufficientFunds && (
                                 <div className="mt-3 pt-3 border-t">
-                                    <Button variant="outline" className="w-full" onClick={() => window.open('/dashboard/wallet', '_blank')}>
+                                    <Button variant="outline" className="w-full" onClick={() => window.open('/account/wallet', '_blank')}>
                                         Add Funds to Wallet
                                     </Button>
                                 </div>

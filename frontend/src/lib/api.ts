@@ -18,11 +18,14 @@ const publicGetEndpoints = [
     '/flights',
     '/airports',
     '/airlines',
+    '/airlines/lookup',
+    '/locations/search',
     '/hotels',
     '/hotels/search',
     '/blog',
     '/promotions',
 ];
+
 
 // Public POST endpoints
 const publicPostEndpoints = [
