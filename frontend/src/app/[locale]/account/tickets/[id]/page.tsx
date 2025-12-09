@@ -4,7 +4,7 @@ import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
-import { Plane, Calendar, Clock, User, Download, Printer, QrCode, CheckCircle2 } from "lucide-react";
+import { Plane, Calendar, Clock, User, Download, Printer, QrCode, CheckCircle2, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,6 +96,24 @@ export default function TicketPage() {
             // Fallback to print if download fails
             console.error('Download failed, using print fallback', error);
             window.print();
+        }
+    };
+
+    const handleAddToCalendar = async () => {
+        try {
+            const response = await api.get(`/bookings/${params.id}/calendar`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/calendar' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `flight-${booking?.pnr || 'booking'}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to download calendar file', error);
         }
     };
 
@@ -191,6 +209,10 @@ export default function TicketPage() {
                         <Button variant="outline" onClick={handlePrint} className="gap-2">
                             <Printer className="w-4 h-4" />
                             Print
+                        </Button>
+                        <Button variant="outline" onClick={handleAddToCalendar} className="gap-2">
+                            <CalendarPlus className="w-4 h-4" />
+                            Add to Calendar
                         </Button>
                         <Button onClick={handleDownload} className="gap-2 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90">
                             <Download className="w-4 h-4" />

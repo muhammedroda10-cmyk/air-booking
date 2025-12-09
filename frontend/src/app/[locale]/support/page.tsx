@@ -65,7 +65,7 @@ export default function SupportPage() {
                             <ContactItem
                                 icon={<Mail className="w-6 h-6 text-primary" />}
                                 title="Email"
-                                content="support@skywings.com"
+                                content="support@voyager.com"
                                 description="We usually respond within 2 hours"
                             />
                             <ContactItem

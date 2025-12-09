@@ -97,6 +97,30 @@ export function FlightCard({
 
     return (
         <Card className="mb-4 overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-slate-900 group">
+            {/* Decorative curved arc with airplane */}
+            <div className="relative h-8 overflow-hidden">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 32" preserveAspectRatio="none">
+                    <path
+                        d="M 0 28 Q 200 -10 400 28"
+                        fill="none"
+                        stroke="url(#arcGradient)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        className="opacity-30"
+                    />
+                    <defs>
+                        <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#06b6d4" />
+                            <stop offset="50%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                {/* Airplane on the arc */}
+                <div className="absolute top-1 left-1/2 -translate-x-1/2 transform">
+                    <Plane className="w-5 h-5 text-cyan-500 rotate-90 drop-shadow-sm" />
+                </div>
+            </div>
             <div className="p-6">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
 

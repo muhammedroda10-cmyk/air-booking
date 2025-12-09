@@ -102,6 +102,53 @@ class PromotionController extends Controller
     }
 
     /**
+     * Get deals specifically formatted for homepage display
+     * Returns city-based deals with prices, trends, and availability
+     */
+    public function homepageDeals()
+    {
+        // In production, these would come from a database table (e.g., featured_routes, deals)
+        // with real-time pricing from flight suppliers
+        $deals = [
+            [
+                'id' => 1,
+                'city' => 'Dubai',
+                'city_ar' => 'دبي',
+                'price' => config('deals.dubai_price', 589),
+                'currency' => config('branding.default_currency', 'USD'),
+                'trend' => '12%',
+                'date' => now()->addDays(rand(7, 30))->format('M d'),
+                'seats' => rand(3, 15),
+                'image' => 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800',
+            ],
+            [
+                'id' => 2,
+                'city' => 'Tokyo',
+                'city_ar' => 'طوكيو',
+                'price' => config('deals.tokyo_price', 749),
+                'currency' => config('branding.default_currency', 'USD'),
+                'trend' => '5%',
+                'date' => now()->addDays(rand(7, 30))->format('M d'),
+                'seats' => rand(3, 15),
+                'image' => 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
+            ],
+            [
+                'id' => 3,
+                'city' => 'Paris',
+                'city_ar' => 'باريس',
+                'price' => config('deals.paris_price', 429),
+                'currency' => config('branding.default_currency', 'USD'),
+                'trend' => '18%',
+                'date' => now()->addDays(rand(7, 30))->format('M d'),
+                'seats' => rand(3, 15),
+                'image' => 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+            ],
+        ];
+
+        return response()->json($deals);
+    }
+
+    /**
      * Validate a promo code
      */
     public function validate(Request $request)

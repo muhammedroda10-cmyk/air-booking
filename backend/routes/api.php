@@ -49,6 +49,7 @@ Route::get('/blog/{slug}', [\App\Http\Controllers\BlogController::class, 'show']
 // Promotions/Deals routes (static for display)
 Route::get('/promotions', [\App\Http\Controllers\PromotionController::class, 'index']);
 Route::get('/promotions/featured', [\App\Http\Controllers\PromotionController::class, 'featured']);
+Route::get('/promotions/homepage-deals', [\App\Http\Controllers\PromotionController::class, 'homepageDeals']);
 
 // Promo codes public routes
 Route::get('/promo-codes/active', [\App\Http\Controllers\PromoCodeController::class, 'activePromoCodes']);
@@ -75,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{booking}/cancel-preview', [\App\Http\Controllers\TicketController::class, 'previewCancellation']);
     Route::post('/bookings/{booking}/cancel', [\App\Http\Controllers\TicketController::class, 'cancel']);
     Route::get('/bookings/{booking}/download', [\App\Http\Controllers\TicketController::class, 'download']);
+    Route::get('/bookings/{booking}/calendar', [\App\Http\Controllers\TicketController::class, 'exportCalendar']);
 
     Route::post('/payments', [\App\Http\Controllers\PaymentController::class, 'store']);
     Route::post('/bookings/{booking}/payment/intent', [\App\Http\Controllers\PaymentController::class, 'createPaymentIntent']);

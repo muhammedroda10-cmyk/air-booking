@@ -6,12 +6,13 @@ import { AirplaneLoader } from "@/components/ui/loading"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { SearchWidget } from "@/components/search-widget"
 import { FlightCard } from "@/components/flight-card"
+import { FlightSkeleton } from "@/components/flight-skeleton"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import api from "@/lib/api"
-import { SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal, Plane, Calendar, MapPin } from "lucide-react"
 import { useLanguage } from "@/context/language-context"
 
 // Normalized flight offer from supplier
@@ -289,9 +290,7 @@ function FlightsContent() {
 
                             <div className="space-y-6">
                                 {loading ? (
-                                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 py-8">
-                                        <AirplaneLoader text={t.loading.flights} />
-                                    </div>
+                                    <FlightSkeleton count={4} />
                                 ) : error ? (
                                     <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
                                         <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -372,26 +371,66 @@ function FlightsContent() {
                                         )
                                     })
                                 ) : (
-                                    <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                                        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <SlidersHorizontal className="w-10 h-10 text-slate-400" />
+                                    <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                                        <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <Plane className="w-12 h-12 text-slate-400" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                                            {dir === 'rtl' ? 'لا توجد رحلات' : 'No flights found'}
+                                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                                            {dir === 'rtl' ? 'لا توجد رحلات متاحة' : 'No flights available'}
                                         </h3>
-                                        <p className="text-slate-500 max-w-md mx-auto">
+                                        <p className="text-slate-500 max-w-md mx-auto mb-8 px-4">
                                             {dir === 'rtl'
-                                                ? 'لم نتمكن من العثور على رحلات تطابق معايير البحث. حاول تعديل التواريخ أو الفلاتر.'
-                                                : "We couldn't find any flights matching your search criteria. Try adjusting your dates or filters."
-                                            }
+                                                ? 'لم نتمكن من العثور على رحلات لهذا المسار في التاريخ المحدد. جرب الاقتراحات أدناه.'
+                                                : "We couldn't find any flights for this route on your selected date. Try the suggestions below."}
                                         </p>
-                                        <Button
-                                            variant="outline"
-                                            className="mt-6"
-                                            onClick={() => window.location.href = '/'}
-                                        >
-                                            {dir === 'rtl' ? 'بحث مرة أخرى' : 'Search Again'}
-                                        </Button>
+
+                                        {/* Suggestions */}
+                                        <div className="max-w-lg mx-auto space-y-4 mb-8 px-4">
+                                            <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-left">
+                                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                                        {dir === 'rtl' ? 'جرب تواريخ مرنة' : 'Try flexible dates'}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {dir === 'rtl' ? 'البحث ±3 أيام قد يظهر المزيد من الخيارات' : 'Searching ±3 days may reveal more options'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-left">
+                                                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <MapPin className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                                        {dir === 'rtl' ? 'جرب مطارات قريبة' : 'Try nearby airports'}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {dir === 'rtl' ? 'المطارات المجاورة قد توفر رحلات أكثر' : 'Adjacent airports may have more flights'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex flex-col sm:flex-row gap-3 justify-center px-4">
+                                            <Button
+                                                variant="default"
+                                                className="bg-primary hover:bg-primary/90"
+                                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                                            >
+                                                {dir === 'rtl' ? 'تعديل البحث' : 'Modify Search'}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => window.location.href = '/'}
+                                            >
+                                                {dir === 'rtl' ? 'عودة للرئيسية' : 'Back to Home'}
+                                            </Button>
+                                        </div>
                                     </div>
                                 )}
                             </div>

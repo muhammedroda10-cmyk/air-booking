@@ -18,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { useRecentSearches, RecentSearch } from "@/hooks/use-recent-searches"
+import { RecentSearches } from "@/components/recent-searches"
 
 interface Airport {
     id: number;
@@ -96,6 +98,25 @@ export function SearchWidget({ defaultTab = "flights" }: { defaultTab?: string }
         }
         fetchData()
     }, [])
+
+    // Recent searches hook
+    const { recentSearches, addSearch, removeSearch, clearSearches } = useRecentSearches()
+
+    // Handle selecting a recent search
+    const handleRecentSearchSelect = (search: RecentSearch) => {
+        setFrom(search.from)
+        setTo(search.to)
+        setTripType(search.tripType as TripType)
+        setTravelers(search.passengers)
+        if (search.returnDate) {
+            setDateRange({
+                from: new Date(search.date),
+                to: new Date(search.returnDate)
+            })
+        } else {
+            setSingleDate(new Date(search.date))
+        }
+    }
 
     // Initialize form values from URL search params
     React.useEffect(() => {
@@ -198,6 +219,31 @@ export function SearchWidget({ defaultTab = "flights" }: { defaultTab?: string }
         if (priceRange[1] < 5000) params.append("max_price", priceRange[1].toString())
         if (selectedAirlines.length > 0) params.append("airlines", selectedAirlines.join(","))
         if (maxStops !== null) params.append("max_stops", maxStops.toString())
+
+        // Save to recent searches
+        if (tripType !== "multi-city" && from && to) {
+            const fromAirport = airports.find(a => a.code === from)
+            const toAirport = airports.find(a => a.code === to)
+            const searchDate = tripType === "round-trip" && dateRange?.from
+                ? format(dateRange.from, "yyyy-MM-dd")
+                : singleDate ? format(singleDate, "yyyy-MM-dd") : ""
+            const returnDateStr = tripType === "round-trip" && dateRange?.to
+                ? format(dateRange.to, "yyyy-MM-dd")
+                : undefined
+
+            if (searchDate) {
+                addSearch({
+                    from,
+                    fromCity: fromAirport?.city || from,
+                    to,
+                    toCity: toAirport?.city || to,
+                    date: searchDate,
+                    returnDate: returnDateStr,
+                    tripType,
+                    passengers: travelers
+                })
+            }
+        }
 
         router.push(`/${locale}/flights?${params.toString()}`)
     }
@@ -705,6 +751,18 @@ export function SearchWidget({ defaultTab = "flights" }: { defaultTab?: string }
                                     </Button>
                                 </div>
                             </div>
+
+                            {/* Recent Searches */}
+                            {recentSearches.length > 0 && (
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                                    <RecentSearches
+                                        searches={recentSearches}
+                                        onSelect={handleRecentSearchSelect}
+                                        onRemove={removeSearch}
+                                        onClear={clearSearches}
+                                    />
+                                </div>
+                            )}
                         </div>
                     ) : activeTab === "hotels" ? (
                         /* Hotels Search Form */

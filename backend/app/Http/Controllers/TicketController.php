@@ -404,7 +404,7 @@ class TicketController extends Controller
             throw new \Exception('Browsershot not available');
         } catch (\Exception $e) {
             \Log::warning('Browsershot not available: ' . $e->getMessage());
-            
+
             // Try DomPDF fallback
             try {
                 if (class_exists('\\Barryvdh\\DomPDF\\Facade\\Pdf')) {
@@ -415,7 +415,7 @@ class TicketController extends Controller
                 throw new \Exception('DomPDF not available');
             } catch (\Exception $e2) {
                 \Log::warning('DomPDF not available: ' . $e2->getMessage());
-                
+
                 // Return HTML as a downloadable file instead
                 $htmlFilename = 'ticket-' . $booking->pnr . '.html';
                 return response($html, 200, [
@@ -443,5 +443,108 @@ class TicketController extends Controller
         } catch (\Exception $e) {
             return 'TBD';
         }
+    }
+
+    /**
+     * Export booking as iCal calendar event
+     */
+    public function exportCalendar(Booking $booking)
+    {
+        $user = request()->user();
+
+        if ($booking->user_id !== $user->id && !$user->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $booking->load(['passengers', 'user']);
+
+        $isExternal = $booking->isExternal();
+        if (!$isExternal) {
+            $booking->load([
+                'flight.airline',
+                'flight.originAirport',
+                'flight.destinationAirport',
+            ]);
+        }
+
+        $flightData = $this->getFlightData($booking, $isExternal);
+
+        // Parse times
+        $startTime = null;
+        $endTime = null;
+        if (!empty($flightData['departure']['time'])) {
+            try {
+                $startTime = new \DateTime($flightData['departure']['time']);
+            } catch (\Exception $e) {
+                $startTime = new \DateTime();
+            }
+        } else {
+            $startTime = new \DateTime();
+        }
+
+        if (!empty($flightData['arrival']['time'])) {
+            try {
+                $endTime = new \DateTime($flightData['arrival']['time']);
+            } catch (\Exception $e) {
+                $endTime = (clone $startTime)->modify('+2 hours');
+            }
+        } else {
+            $endTime = (clone $startTime)->modify('+2 hours');
+        }
+
+        // Build event summary and description
+        $from = $flightData['departure']['airport'] ?? 'DEP';
+        $to = $flightData['arrival']['airport'] ?? 'ARR';
+        $airline = $flightData['airline'] ?? 'Flight';
+        $flightNumber = $flightData['number'] ?? $booking->pnr;
+        $summary = "✈️ {$from} → {$to} ({$airline} {$flightNumber})";
+
+        $passengerNames = $booking->passengers->map(fn($p) => $p->full_name ?? ($p->first_name . ' ' . $p->last_name))->implode(', ');
+        $description = "Flight: {$airline} {$flightNumber}\\n";
+        $description .= "From: {$from} ({$flightData['departure']['city']})\\n";
+        $description .= "To: {$to} ({$flightData['arrival']['city']})\\n";
+        $description .= "PNR: {$booking->pnr}\\n";
+        $description .= "Passengers: {$passengerNames}\\n";
+        if ($flightData['cabin'] ?? null) {
+            $description .= "Cabin: {$flightData['cabin']}\\n";
+        }
+
+        $location = "{$flightData['departure']['airport']} ({$flightData['departure']['city']})";
+
+        // Generate iCal content
+        $uid = md5($booking->id . $booking->pnr) . '@voyager.travel';
+        $dtstamp = gmdate('Ymd\THis\Z');
+        $dtstart = $startTime->format('Ymd\THis\Z');
+        $dtend = $endTime->format('Ymd\THis\Z');
+
+        $ical = "BEGIN:VCALENDAR\r\n";
+        $ical .= "VERSION:2.0\r\n";
+        $ical .= "PRODID:-//Voyager Travel//Flight Booking//EN\r\n";
+        $ical .= "CALSCALE:GREGORIAN\r\n";
+        $ical .= "METHOD:PUBLISH\r\n";
+        $ical .= "BEGIN:VEVENT\r\n";
+        $ical .= "UID:{$uid}\r\n";
+        $ical .= "DTSTAMP:{$dtstamp}\r\n";
+        $ical .= "DTSTART:{$dtstart}\r\n";
+        $ical .= "DTEND:{$dtend}\r\n";
+        $ical .= "SUMMARY:{$summary}\r\n";
+        $ical .= "DESCRIPTION:{$description}\r\n";
+        $ical .= "LOCATION:{$location}\r\n";
+        $ical .= "STATUS:CONFIRMED\r\n";
+        // Alarm 2 hours before
+        $ical .= "BEGIN:VALARM\r\n";
+        $ical .= "TRIGGER:-PT2H\r\n";
+        $ical .= "ACTION:DISPLAY\r\n";
+        $ical .= "DESCRIPTION:Flight {$flightNumber} to {$to} in 2 hours\r\n";
+        $ical .= "END:VALARM\r\n";
+        $ical .= "END:VEVENT\r\n";
+        $ical .= "END:VCALENDAR\r\n";
+
+        $filename = "flight-{$booking->pnr}.ics";
+
+        return response($ical, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }

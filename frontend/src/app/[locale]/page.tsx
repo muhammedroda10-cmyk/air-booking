@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { PublicLayout } from "@/components/layouts/public-layout"
 import { SearchWidget } from "@/components/search-widget"
@@ -9,9 +9,43 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Calendar, Star, Shield, Clock, CreditCard, Umbrella, Mountain, Landmark, Gem, Wallet, Utensils, ArrowRight, User } from "lucide-react"
 import { useLanguage } from "@/context/language-context"
+import api from "@/lib/api"
+
+interface HomepageDeal {
+  id: number
+  city: string
+  city_ar: string
+  price: number
+  currency: string
+  trend: string
+  date: string
+  seats: number
+}
+
+// Fallback deals if API fails
+const fallbackDeals: HomepageDeal[] = [
+  { id: 1, city: 'Dubai', city_ar: 'دبي', price: 589, currency: 'USD', trend: '12%', date: 'Dec 15', seats: 8 },
+  { id: 2, city: 'Tokyo', city_ar: 'طوكيو', price: 749, currency: 'USD', trend: '5%', date: 'Dec 20', seats: 3 },
+  { id: 3, city: 'Paris', city_ar: 'باريس', price: 429, currency: 'USD', trend: '18%', date: 'Dec 18', seats: 12 },
+]
 
 export default function Home() {
   const { t, dir } = useLanguage()
+  const [deals, setDeals] = useState<HomepageDeal[]>(fallbackDeals)
+
+  useEffect(() => {
+    const fetchDeals = async () => {
+      try {
+        const response = await api.get('/promotions/homepage-deals')
+        if (response.data && Array.isArray(response.data)) {
+          setDeals(response.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch homepage deals, using fallback', error)
+      }
+    }
+    fetchDeals()
+  }, [])
 
   return (
     <PublicLayout>
@@ -150,36 +184,19 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <DealCard
-              t={t}
-              dir={dir}
-              city="Dubai"
-              cityAr="دبي"
-              price="$589"
-              trend="12%"
-              date="Dec 15"
-              seats={8}
-            />
-            <DealCard
-              t={t}
-              dir={dir}
-              city="Tokyo"
-              cityAr="طوكيو"
-              price="$749"
-              trend="5%"
-              date="Dec 20"
-              seats={3}
-            />
-            <DealCard
-              t={t}
-              dir={dir}
-              city="Paris"
-              cityAr="باريس"
-              price="$429"
-              trend="18%"
-              date="Dec 18"
-              seats={12}
-            />
+            {deals.map((deal) => (
+              <DealCard
+                key={deal.id}
+                t={t}
+                dir={dir}
+                city={deal.city}
+                cityAr={deal.city_ar}
+                price={`$${deal.price}`}
+                trend={deal.trend}
+                date={deal.date}
+                seats={deal.seats}
+              />
+            ))}
           </div>
         </div>
       </section>
