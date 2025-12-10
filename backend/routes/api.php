@@ -116,6 +116,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/loyalty/redeem', [\App\Http\Controllers\LoyaltyController::class, 'redeem']);
     Route::get('/loyalty/tiers', [\App\Http\Controllers\LoyaltyController::class, 'tiers']);
 
+    // Support Tickets routes (User)
+    Route::get('/support-tickets/options', [\App\Http\Controllers\SupportTicketController::class, 'options']);
+    Route::get('/support-tickets', [\App\Http\Controllers\SupportTicketController::class, 'index']);
+    Route::post('/support-tickets', [\App\Http\Controllers\SupportTicketController::class, 'store']);
+    Route::get('/support-tickets/{ticket}', [\App\Http\Controllers\SupportTicketController::class, 'show']);
+    Route::post('/support-tickets/{ticket}/messages', [\App\Http\Controllers\SupportTicketController::class, 'addMessage']);
+    Route::post('/support-tickets/{ticket}/close', [\App\Http\Controllers\SupportTicketController::class, 'close']);
+    Route::post('/support-tickets/{ticket}/reopen', [\App\Http\Controllers\SupportTicketController::class, 'reopen']);
+
     Route::middleware('admin')->group(function () {
 
         Route::apiResource('airports', \App\Http\Controllers\AirportController::class)->except(['index']);
@@ -146,5 +155,36 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('admin/suppliers', \App\Http\Controllers\Admin\SupplierController::class);
         Route::post('/admin/suppliers/{supplier}/toggle-status', [\App\Http\Controllers\Admin\SupplierController::class, 'toggleStatus']);
         Route::post('/admin/suppliers/{supplier}/test', [\App\Http\Controllers\Admin\SupplierController::class, 'testConnection']);
+
+        // Support Ticket management (Admin)
+        Route::get('/admin/support-tickets/statistics', [\App\Http\Controllers\Admin\AdminSupportController::class, 'statistics']);
+        Route::get('/admin/support-tickets', [\App\Http\Controllers\Admin\AdminSupportController::class, 'index']);
+        Route::get('/admin/support-tickets/{ticket}', [\App\Http\Controllers\Admin\AdminSupportController::class, 'show']);
+        Route::put('/admin/support-tickets/{ticket}', [\App\Http\Controllers\Admin\AdminSupportController::class, 'update']);
+        Route::post('/admin/support-tickets/{ticket}/reply', [\App\Http\Controllers\Admin\AdminSupportController::class, 'reply']);
+        Route::post('/admin/support-tickets/bulk-update', [\App\Http\Controllers\Admin\AdminSupportController::class, 'bulkUpdate']);
+    });
+
+    // ============================================
+    // Dashboard Routes (Staff Only - New RBAC System)
+    // ============================================
+    Route::prefix('dashboard')->middleware('staff')->group(function () {
+        // Role & Permission Management
+        Route::get('/roles', [\App\Http\Controllers\Dashboard\RoleController::class, 'index']);
+        Route::post('/roles', [\App\Http\Controllers\Dashboard\RoleController::class, 'store']);
+        Route::get('/roles/{role}', [\App\Http\Controllers\Dashboard\RoleController::class, 'show']);
+        Route::put('/roles/{role}', [\App\Http\Controllers\Dashboard\RoleController::class, 'update']);
+        Route::delete('/roles/{role}', [\App\Http\Controllers\Dashboard\RoleController::class, 'destroy']);
+        Route::get('/permissions', [\App\Http\Controllers\Dashboard\RoleController::class, 'permissions']);
+        Route::post('/users/{user}/assign-role', [\App\Http\Controllers\Dashboard\RoleController::class, 'assignToUser']);
+        Route::post('/users/{user}/assign-permissions', [\App\Http\Controllers\Dashboard\RoleController::class, 'assignPermissionsToUser']);
+
+        // Passenger Corrections
+        Route::get('/bookings/{booking}/passengers', [\App\Http\Controllers\Dashboard\PassengerController::class, 'index']);
+        Route::put('/passengers/{passenger}', [\App\Http\Controllers\Dashboard\PassengerController::class, 'update']);
+        Route::get('/passengers/{passenger}/history', [\App\Http\Controllers\Dashboard\PassengerController::class, 'correctionHistory']);
+
+        // Admin Refunds (partial with penalty)
+        Route::post('/bookings/{booking}/refund', [\App\Http\Controllers\PaymentController::class, 'adminRefund']);
     });
 });

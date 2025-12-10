@@ -4,9 +4,9 @@ import { UserLayout } from "@/components/layouts/user-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
-import { Plane, Calendar, Clock, User, Download, Printer, QrCode, CheckCircle2, CalendarPlus } from "lucide-react";
+import { Plane, Calendar, Clock, User, Download, Printer, QrCode, CheckCircle2, CalendarPlus, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -55,6 +55,7 @@ interface Booking {
 
 export default function TicketPage() {
     const params = useParams();
+    const router = useRouter();
     const [booking, setBooking] = useState<Booking | null>(null);
     const [loading, setLoading] = useState(true);
     const ticketRef = useRef<HTMLDivElement>(null);
@@ -217,6 +218,14 @@ export default function TicketPage() {
                         <Button onClick={handleDownload} className="gap-2 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90">
                             <Download className="w-4 h-4" />
                             Download PDF
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => router.push(`/account/support/new?booking=${booking.id}&category=booking_issue`)}
+                            className="gap-2"
+                        >
+                            <Headphones className="w-4 h-4" />
+                            Get Support
                         </Button>
                     </motion.div>
                 </div>

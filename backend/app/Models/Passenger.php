@@ -27,11 +27,18 @@ class Passenger extends Model
         'ticket_number',
         'email',
         'phone_number',
+        // Correction audit fields
+        'original_data',
+        'corrected_by',
+        'corrected_at',
+        'correction_reason',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'passport_expiry' => 'date',
+        'original_data' => 'array',
+        'corrected_at' => 'datetime',
     ];
 
     protected static function boot()

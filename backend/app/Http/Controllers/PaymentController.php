@@ -51,7 +51,7 @@ class PaymentController extends Controller
 
         $amount = (float) $booking->total_price;
         $pointsToRedeem = (int) ($request->points_to_redeem ?? 0);
-        
+
         // Calculate discount from points (100 points = $1)
         $pointsDiscount = $pointsToRedeem / 100;
         $finalAmount = max(0, $amount - $pointsDiscount);
@@ -83,7 +83,7 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'message' => 'Payment failed. Please try again.',
                 'error' => config('app.debug') ? $e->getMessage() : null,
@@ -314,9 +314,9 @@ class PaymentController extends Controller
 
         try {
             $gateway = new \App\Services\PaymentGateway\StripeGateway();
-            
+
             $result = $gateway->createPaymentIntent(
-                $booking->total_price, 
+                $booking->total_price,
                 $booking->currency ?? 'usd',
                 [
                     'booking_id' => $booking->id,
@@ -361,7 +361,7 @@ class PaymentController extends Controller
                 // Determine payment method details if available
                 $method = 'credit_card'; // Default
                 if (!empty($status['payment_method'])) {
-                     // Could fetch method details if needed
+                    // Could fetch method details if needed
                 }
 
                 // Update Booking if not already updated (Webhook might have raced)
@@ -383,7 +383,7 @@ class PaymentController extends Controller
                         // Existing processCardPayment created a 'debit' on wallet? 
                         // "Create wallet transaction record for payment history" -> yes, it did.
                         // Let's replicate that for consistency.
-                        
+
                         $wallet = $request->user()->wallet()->firstOrCreate(['user_id' => $request->user()->id], ['balance' => 0]);
                         $wallet->transactions()->create([
                             'amount' => $booking->total_price,
@@ -431,7 +431,7 @@ class PaymentController extends Controller
             }
 
         } catch (\Exception $e) {
-             Log::error("Payment Confirmation Failed", [
+            Log::error("Payment Confirmation Failed", [
                 'booking_id' => $booking->id,
                 'error' => $e->getMessage()
             ]);
@@ -466,7 +466,7 @@ class PaymentController extends Controller
                     'new_price' => $offer->price->total,
                     'difference' => $priceDifference,
                 ]);
-                
+
                 throw new \Exception(
                     "Price has changed from \${$booking->total_price} to \${$offer->price->total}. Please re-book."
                 );
@@ -501,10 +501,10 @@ class PaymentController extends Controller
                     'booking_id' => $booking->id,
                     'attempt' => $attempt + 1,
                 ]);
-                
+
                 // Wait briefly before retry (exponential backoff)
                 usleep(pow(2, $attempt) * 100000); // 200ms, 400ms, 800ms
-                
+
                 return $this->confirmExternalBookingWithRetry($booking, $attempt + 1);
             }
 
@@ -530,7 +530,7 @@ class PaymentController extends Controller
         ];
 
         $message = strtolower($e->getMessage());
-        
+
         foreach ($retryableMessages as $retryable) {
             if (str_contains($message, $retryable)) {
                 return true;
@@ -546,7 +546,7 @@ class PaymentController extends Controller
     private function loadBookingRelations(Booking $booking): Booking
     {
         $booking->load('passengers');
-        
+
         if ($booking->flight_id) {
             $booking->load('flight.airline', 'flight.originAirport', 'flight.destinationAirport');
         }
@@ -679,6 +679,135 @@ class PaymentController extends Controller
     }
 
     /**
+     * Admin process refund with partial amount and penalty support
+     * Requires 'refunds.process' permission
+     */
+    public function adminRefund(Request $request, Booking $booking)
+    {
+        $user = $request->user();
+
+        // Check permission
+        if (!$user->hasPermission('refunds.process')) {
+            return response()->json(['message' => 'Access denied. Requires refunds.process permission.'], 403);
+        }
+
+        $request->validate([
+            'refund_amount' => 'required|numeric|min:0',
+            'penalty_amount' => 'nullable|numeric|min:0',
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        if ($booking->payment_status !== 'paid') {
+            return response()->json([
+                'message' => 'Cannot refund an unpaid booking',
+            ], 400);
+        }
+
+        if ($booking->payment_status === 'refunded') {
+            return response()->json([
+                'message' => 'Booking has already been fully refunded',
+            ], 400);
+        }
+
+        $refundAmount = (float) $request->refund_amount;
+        $penaltyAmount = (float) ($request->penalty_amount ?? 0);
+        $totalPaid = (float) $booking->total_price;
+        $previousRefund = (float) ($booking->refund_amount ?? 0);
+        $maxRefundable = $totalPaid - $previousRefund;
+
+        // Validate refund amount
+        if ($refundAmount > $maxRefundable) {
+            return response()->json([
+                'message' => 'Refund amount exceeds maximum refundable',
+                'max_refundable' => $maxRefundable,
+                'requested' => $refundAmount,
+            ], 400);
+        }
+
+        // If full refund, check for 'refunds.full' permission (no penalty required)
+        if ($refundAmount === $maxRefundable && $penaltyAmount === 0.0) {
+            if (!$user->hasPermission('refunds.full')) {
+                return response()->json([
+                    'message' => 'Full refunds without penalty require refunds.full permission',
+                ], 403);
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($booking, $refundAmount, $penaltyAmount, $request, $previousRefund, $maxRefundable) {
+                // Get customer's wallet
+                $customerWallet = Wallet::firstOrCreate(
+                    ['user_id' => $booking->user_id],
+                    ['balance' => 0]
+                );
+
+                // Credit refund to customer wallet
+                $customerWallet->increment('balance', $refundAmount);
+
+                // Create refund transaction
+                $customerWallet->transactions()->create([
+                    'amount' => $refundAmount,
+                    'type' => 'credit',
+                    'description' => "Refund for booking #{$booking->pnr} (Admin processed)",
+                    'reference' => 'REF_' . strtoupper(uniqid()),
+                ]);
+
+                // Determine payment status
+                $totalRefunded = $previousRefund + $refundAmount;
+                $paymentStatus = $totalRefunded >= $maxRefundable ? 'refunded' : 'partial_refund';
+
+                // Update booking
+                $booking->update([
+                    'payment_status' => $paymentStatus,
+                    'refund_amount' => $totalRefunded,
+                    'penalty_amount' => $penaltyAmount,
+                    'refund_reason' => $request->reason,
+                    'refunded_by' => $request->user()->id,
+                    'refunded_at' => now(),
+                ]);
+
+                // Notify customer
+                Notification::create([
+                    'user_id' => $booking->user_id,
+                    'type' => 'refund',
+                    'title' => 'Refund Processed',
+                    'message' => "A refund of \${$refundAmount} has been credited to your wallet for booking #{$booking->pnr}." .
+                        ($penaltyAmount > 0 ? " A penalty of \${$penaltyAmount} was applied." : ''),
+                    'data' => [
+                        'booking_id' => $booking->id,
+                        'refund_amount' => $refundAmount,
+                        'penalty_amount' => $penaltyAmount,
+                    ],
+                ]);
+            });
+
+            Log::info("Admin refund processed", [
+                'booking_id' => $booking->id,
+                'refund_amount' => $refundAmount,
+                'penalty_amount' => $penaltyAmount,
+                'processed_by' => $request->user()->id,
+            ]);
+
+            return response()->json([
+                'message' => 'Refund processed successfully',
+                'refund_amount' => $refundAmount,
+                'penalty_amount' => $penaltyAmount,
+                'booking' => $booking->fresh(),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Admin refund processing failed", [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to process refund',
+            ], 500);
+        }
+    }
+
+    /**
      * Award loyalty points for a successful booking
      */
     private function awardLoyaltyPoints($user, Booking $booking)
@@ -688,12 +817,13 @@ class PaymentController extends Controller
                 ['user_id' => $user->id],
                 ['balance' => 0, 'lifetime_points' => 0, 'tier' => 'bronze']
             );
-            
+
             $pointsToEarn = $loyalty->calculatePointsToEarn($booking->total_price);
-            
+
             // Avoid duplicate points if already awarded
             $existing = \App\Models\LoyaltyTransaction::where('reference', 'EARN_' . $booking->pnr)->first();
-            if ($existing) return;
+            if ($existing)
+                return;
 
             $loyalty->addPoints(
                 $pointsToEarn,
@@ -702,8 +832,8 @@ class PaymentController extends Controller
                 $booking->id,
                 'EARN_' . $booking->pnr
             );
-            
-             Notification::create([
+
+            Notification::create([
                 'user_id' => $user->id,
                 'type' => 'loyalty',
                 'title' => 'Points Earned!',
@@ -713,7 +843,7 @@ class PaymentController extends Controller
                     'points' => $pointsToEarn,
                 ],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error("Failed to award loyalty points", [
                 'booking_id' => $booking->id,

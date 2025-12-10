@@ -5,7 +5,7 @@ import { Footer } from "@/components/ui/footer"
 import { LocaleLink } from "@/components/locale-link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Plane, Building2, Wallet, User, Settings, History, LayoutDashboard } from "lucide-react"
+import { Plane, Building2, Wallet, User, Settings, History, LayoutDashboard, Headphones } from "lucide-react"
 
 interface UserLayoutProps {
     children: React.ReactNode
@@ -17,6 +17,7 @@ const navItems = [
     { href: "/account/hotel-bookings", label: "Hotels", icon: Building2 },
     { href: "/account/history", label: "History", icon: History },
     { href: "/account/wallet", label: "Wallet", icon: Wallet },
+    { href: "/account/support", label: "Support", icon: Headphones },
     { href: "/account/profile", label: "Profile", icon: User },
     { href: "/account/settings", label: "Settings", icon: Settings },
 ]
