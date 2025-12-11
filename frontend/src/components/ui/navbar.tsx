@@ -101,9 +101,9 @@ export function Navbar() {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/account" className="cursor-pointer">
+                                        <LocaleLink href={user.role === 'admin' || user.role_id ? '/dashboard' : '/account'} className="cursor-pointer">
                                             <LayoutDashboard className="w-4 h-4 mr-2" />
-                                            {t.nav.dashboard || 'My Account'}
+                                            {user.role === 'admin' || user.role_id ? (t.nav.dashboard || 'Dashboard') : (t.nav.dashboard || 'My Account')}
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>

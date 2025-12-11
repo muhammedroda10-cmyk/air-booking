@@ -37,9 +37,10 @@ export default async function LocaleLayout({ children, params }: Props) {
     const dir = currentLocale === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <html lang={currentLocale} dir={dir}>
+        <html lang={currentLocale} dir={dir} suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased ${currentLocale === 'ar' ? 'font-arabic' : ''}`}
+                suppressHydrationWarning
             >
                 <LanguageProvider locale={currentLocale as 'en' | 'ar'}>
                     <ToastProvider>

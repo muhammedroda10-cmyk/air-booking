@@ -15,27 +15,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create Admin User
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => bcrypt('password'),
-                'role' => 'admin',
-            ]
-        );
+        // 1. First create roles and permissions
+        $this->call(RolesAndPermissionsSeeder::class);
+        
+        // 2. Then create users with roles
+        $this->call(UserSeeder::class);
 
-        // 2. Create Regular User
-        $user = User::firstOrCreate(
-            ['email' => 'user@example.com'],
-            [
-                'name' => 'Regular User',
-                'password' => bcrypt('password'),
-                'role' => 'user',
-            ]
-        );
-
-        // 3. Create Real Airlines and Airports
+        // 3. Create Real Airlines, Airports, Flights, Hotels, etc.
         $this->call([
             SupplierSeeder::class,
             RealDataSeeder::class,
@@ -64,17 +50,22 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        // 6. Create Bookings for the Regular User
-        if ($flights->isNotEmpty()) {
+        // 6. Create Bookings for a sample customer
+        $customer = User::where('email', 'john@example.com')->first();
+        if ($flights->isNotEmpty() && $customer) {
             Booking::factory(5)
-                ->for($user)
+                ->for($customer)
                 ->recycle($flights)
                 ->has(Passenger::factory()->count(2))
                 ->create();
         }
         
-        echo "Database seeded successfully!\n";
-        echo "Admin: admin@example.com / password\n";
-        echo "User: user@example.com / password\n";
+        echo "\nDatabase seeded successfully!\n";
+        echo "=================================\n";
+        echo "Admin: admin@voyager.com / password\n";
+        echo "Sales: sales@voyager.com / password\n";
+        echo "Accounting: accounting@voyager.com / password\n"; 
+        echo "Support: support@voyager.com / password\n";
+        echo "Customer: john@example.com / password\n";
     }
 }

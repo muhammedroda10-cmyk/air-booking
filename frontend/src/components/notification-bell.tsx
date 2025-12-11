@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Notification {
@@ -20,6 +21,7 @@ interface Notification {
 
 export function NotificationBell() {
     const { user } = useAuth();
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -92,7 +94,8 @@ export function NotificationBell() {
         }
     };
 
-    const deleteNotification = async (id: number) => {
+    const deleteNotification = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
         try {
             await api.delete(`/notifications/${id}`);
             const notification = notifications.find(n => n.id === id);
@@ -105,18 +108,81 @@ export function NotificationBell() {
         }
     };
 
+    const handleMarkAsRead = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        await markAsRead(id);
+    };
+
     const getNotificationIcon = (type: string) => {
         switch (type) {
+            case 'booking':
             case 'booking_confirmed':
                 return '✈️';
             case 'booking_cancelled':
                 return '❌';
+            case 'payment':
             case 'payment_received':
                 return '💳';
+            case 'refund':
             case 'refund_processed':
                 return '💰';
+            case 'support_ticket':
+                return '🎫';
+            case 'wallet':
+                return '👛';
+            case 'price_alert':
+                return '📊';
             default:
                 return '🔔';
+        }
+    };
+
+    // Get the link URL based on notification type and data
+    const getNotificationLink = (notification: Notification): string | null => {
+        const { type, data } = notification;
+
+        if (!data) return null;
+
+        switch (type) {
+            case 'booking':
+            case 'booking_confirmed':
+            case 'booking_cancelled':
+            case 'payment':
+            case 'payment_received':
+                if (data.booking_id) return `/account/bookings/${data.booking_id}`;
+                break;
+            case 'refund':
+            case 'refund_processed':
+                if (data.booking_id) return `/account/bookings/${data.booking_id}`;
+                break;
+            case 'support_ticket':
+                if (data.ticket_id) return `/account/support/${data.ticket_id}`;
+                break;
+            case 'wallet':
+                return '/account/wallet';
+            case 'price_alert':
+                if (data.alert_id) return `/account/price-alerts`;
+                break;
+            case 'hotel_booking':
+                if (data.hotel_booking_id) return `/account/hotels/${data.hotel_booking_id}`;
+                break;
+        }
+
+        return null;
+    };
+
+    // Handle notification click
+    const handleNotificationClick = async (notification: Notification) => {
+        // Mark as read if not already
+        if (!notification.is_read) {
+            await markAsRead(notification.id);
+        }
+
+        // Get the link and navigate
+        const link = getNotificationLink(notification);
+        if (link) {
+            setIsOpen(false);
+            router.push(link);
         }
     };
 
@@ -159,44 +225,53 @@ export function NotificationBell() {
                                 <p>No notifications yet</p>
                             </div>
                         ) : (
-                            notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className={`p-3 border-b hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${!notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                                        }`}
-                                >
-                                    <div className="flex gap-3">
-                                        <span className="text-xl">{getNotificationIcon(notification.type)}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-sm truncate">{notification.title}</p>
-                                            <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            {!notification.is_read && (
+                            notifications.map((notification) => {
+                                const hasLink = getNotificationLink(notification) !== null;
+                                return (
+                                    <div
+                                        key={notification.id}
+                                        className={`p-3 border-b hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${!notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                                            } ${hasLink ? 'cursor-pointer' : ''}`}
+                                        onClick={() => hasLink && handleNotificationClick(notification)}
+                                    >
+                                        <div className="flex gap-3">
+                                            <span className="text-xl">{getNotificationIcon(notification.type)}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate">{notification.title}</p>
+                                                <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                                    </p>
+                                                    {hasLink && (
+                                                        <span className="text-xs text-primary">View →</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                {!notification.is_read && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6"
+                                                        onClick={(e) => handleMarkAsRead(notification.id, e)}
+                                                    >
+                                                        <Check className="w-3 h-3" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() => markAsRead(notification.id)}
+                                                    className="h-6 w-6 text-red-500"
+                                                    onClick={(e) => deleteNotification(notification.id, e)}
                                                 >
-                                                    <Check className="w-3 h-3" />
+                                                    <X className="w-3 h-3" />
                                                 </Button>
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-red-500"
-                                                onClick={() => deleteNotification(notification.id)}
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
 

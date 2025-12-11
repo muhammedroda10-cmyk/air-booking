@@ -7,6 +7,7 @@ use App\Models\Flight;
 use App\Models\Notification;
 use App\Models\PromoCode;
 use App\Models\PromoCodeUsage;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -363,6 +364,9 @@ class BookingController extends Controller
                     'discount' => $discount,
                     'addons_count' => count($addonsData)
                 ]);
+
+                // Log activity
+                ActivityService::logBookingCreated($booking);
 
                 return response()->json([
                     'booking' => $booking,

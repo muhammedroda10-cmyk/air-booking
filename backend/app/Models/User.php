@@ -186,7 +186,11 @@ class User extends Authenticatable
         $permissions = $this->directPermissions()->get();
 
         if ($this->roleRelation) {
-            $permissions = $permissions->merge($this->roleRelation->permissions);
+            // Load permissions if not already loaded
+            if (!$this->roleRelation->relationLoaded('permissions')) {
+                $this->roleRelation->load('permissions');
+            }
+            $permissions = $permissions->merge($this->roleRelation->permissions ?? collect());
         }
 
         return $permissions->unique('id');

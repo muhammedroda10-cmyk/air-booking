@@ -125,6 +125,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/support-tickets/{ticket}/close', [\App\Http\Controllers\SupportTicketController::class, 'close']);
     Route::post('/support-tickets/{ticket}/reopen', [\App\Http\Controllers\SupportTicketController::class, 'reopen']);
 
+    // Activity Log routes (User)
+    Route::get('/activity', [\App\Http\Controllers\ActivityLogController::class, 'index']);
+    Route::get('/activity/types', [\App\Http\Controllers\ActivityLogController::class, 'actionTypes']);
+
     Route::middleware('admin')->group(function () {
 
         Route::apiResource('airports', \App\Http\Controllers\AirportController::class)->except(['index']);
@@ -132,6 +136,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('flights', \App\Http\Controllers\FlightController::class)->except(['index', 'show']);
         Route::apiResource('admin/hotels', \App\Http\Controllers\HotelController::class)->except(['index', 'show']);
         Route::get('/admin/bookings', [\App\Http\Controllers\AdminBookingController::class, 'index']);
+        Route::get('/admin/bookings/{booking}', [\App\Http\Controllers\AdminBookingController::class, 'show']);
+        Route::post('/admin/bookings/{booking}/refund', [\App\Http\Controllers\AdminBookingController::class, 'refund']);
+        Route::post('/admin/bookings/{booking}/cancel', [\App\Http\Controllers\AdminBookingController::class, 'cancel']);
         Route::get('/admin/stats', [\App\Http\Controllers\DashboardController::class, 'stats']);
 
         // User management
@@ -163,6 +170,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/admin/support-tickets/{ticket}', [\App\Http\Controllers\Admin\AdminSupportController::class, 'update']);
         Route::post('/admin/support-tickets/{ticket}/reply', [\App\Http\Controllers\Admin\AdminSupportController::class, 'reply']);
         Route::post('/admin/support-tickets/bulk-update', [\App\Http\Controllers\Admin\AdminSupportController::class, 'bulkUpdate']);
+
+        // Transaction management
+        Route::get('/admin/transactions', [\App\Http\Controllers\TransactionController::class, 'index']);
+        Route::get('/admin/transactions/{transaction}', [\App\Http\Controllers\TransactionController::class, 'show']);
+        Route::post('/admin/transactions', [\App\Http\Controllers\TransactionController::class, 'store']);
+        Route::get('/admin/wallets/{wallet}/transactions', [\App\Http\Controllers\TransactionController::class, 'walletTransactions']);
+
+        // Activity Log management (Admin)
+        Route::get('/admin/activity', [\App\Http\Controllers\ActivityLogController::class, 'adminIndex']);
+        Route::get('/admin/activity/statistics', [\App\Http\Controllers\ActivityLogController::class, 'statistics']);
+        Route::get('/admin/activity/types', [\App\Http\Controllers\ActivityLogController::class, 'actionTypes']);
     });
 
     // ============================================

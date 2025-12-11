@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,10 +37,21 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Log registration
+        ActivityService::logRegistration($user);
+
+        // Load permissions for new user (none for customers initially)
+        $user->load(['roleRelation', 'directPermissions']);
+        $permissions = $user->getAllPermissions();
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'user' => [
+                ...$user->toArray(),
+                'role_relation' => $user->roleRelation,
+                'permissions' => $permissions,
+            ],
         ], 201);
     }
 
@@ -74,15 +86,29 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Log login
+        ActivityService::logLogin($user->id);
+
+        // Load role and permissions for frontend RBAC
+        $user->load(['roleRelation', 'directPermissions']);
+        $permissions = $user->getAllPermissions();
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'user' => [
+                ...$user->toArray(),
+                'role_relation' => $user->roleRelation,
+                'permissions' => $permissions,
+            ],
         ]);
     }
 
     public function logout(Request $request)
     {
+        // Log logout before deleting token
+        ActivityService::logLogout();
+        
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully']);
@@ -90,7 +116,14 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user()->load(['roleRelation', 'directPermissions']);
+        $permissions = $user->getAllPermissions();
+        
+        return response()->json([
+            ...$user->toArray(),
+            'role_relation' => $user->roleRelation,
+            'permissions' => $permissions,
+        ]);
     }
 
     public function updateProfile(Request $request)
@@ -107,7 +140,14 @@ class AuthController extends Controller
             'address' => 'nullable|string|max:500',
         ]);
 
+        $oldValues = $user->only(array_keys($validated));
         $user->update($validated);
+
+        // Log profile update
+        $changedFields = array_diff_assoc($validated, $oldValues);
+        if (!empty($changedFields)) {
+            ActivityService::logProfileUpdated($changedFields);
+        }
 
         return response()->json($user);
     }
@@ -130,6 +170,9 @@ class AuthController extends Controller
         $user->update([
             'password' => Hash::make($request->new_password),
         ]);
+
+        // Log password change
+        ActivityService::logPasswordChange();
 
         // Invalidate all other tokens for security
         $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->delete();

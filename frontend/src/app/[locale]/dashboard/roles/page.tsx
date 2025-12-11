@@ -253,12 +253,13 @@ export default function RolesPage() {
                                 <div className="mt-3 border rounded-lg divide-y">
                                     {Object.entries(permissions).map(([module, perms]) => (
                                         <div key={module}>
-                                            <button
-                                                type="button"
+                                            <div
                                                 className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
-                                                onClick={() => toggleModule(module)}
                                             >
-                                                <div className="flex items-center gap-2">
+                                                <div
+                                                    className="flex items-center gap-2 cursor-pointer flex-1"
+                                                    onClick={() => toggleModule(module)}
+                                                >
                                                     {expandedModules.includes(module) ? (
                                                         <ChevronDown className="w-4 h-4" />
                                                     ) : (
@@ -275,14 +276,11 @@ export default function RolesPage() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleAllInModule(module);
-                                                    }}
+                                                    onClick={() => toggleAllInModule(module)}
                                                 >
                                                     Toggle All
                                                 </Button>
-                                            </button>
+                                            </div>
                                             {expandedModules.includes(module) && (
                                                 <div className="px-4 py-2 bg-muted/30 grid grid-cols-2 gap-2">
                                                     {perms.map((perm) => (

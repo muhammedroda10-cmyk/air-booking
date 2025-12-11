@@ -12,7 +12,7 @@ class AdminUserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::query()->with('roleRelation');
 
         // Search by name or email
         if ($request->has('search')) {
@@ -32,7 +32,7 @@ class AdminUserController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return response()->json($users);
+        return response()->json(['users' => $users]);
     }
 
     /**

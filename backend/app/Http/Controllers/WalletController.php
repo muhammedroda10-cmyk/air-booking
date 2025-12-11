@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -60,6 +61,12 @@ class WalletController extends Controller
 
         $wallet->refresh();
         $wallet->load(['transactions' => fn($q) => $q->orderBy('created_at', 'desc')->limit(20)]);
+
+        // Log activity
+        $lastTransaction = $wallet->transactions->first();
+        if ($lastTransaction) {
+            ActivityService::logWalletDeposit($lastTransaction, $amount);
+        }
 
         return response()->json([
             'id' => $wallet->id,

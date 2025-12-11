@@ -15,9 +15,42 @@ class FlightController extends Controller
     ) {
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return Flight::with(['airline', 'originAirport', 'destinationAirport'])->get();
+        $query = Flight::with(['airline', 'originAirport', 'destinationAirport']);
+        
+        // Search
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('flight_number', 'like', "%{$search}%")
+                  ->orWhereHas('airline', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('originAirport', function ($q) use ($search) {
+                      $q->where('city', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('destinationAirport', function ($q) use ($search) {
+                      $q->where('city', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        $flights = $query->orderBy('departure_time', 'desc')->paginate(50);
+        
+        return response()->json([
+            'data' => $flights->items(),
+            'total' => $flights->total(),
+            'current_page' => $flights->currentPage(),
+            'last_page' => $flights->lastPage(),
+        ]);
     }
 
 

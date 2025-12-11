@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Notification;
 use App\Models\SupportTicket;
 use App\Models\TicketMessage;
+use App\Services\ActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -103,6 +104,9 @@ class SupportTicketController extends Controller
                 'user_id' => $request->user()->id,
                 'category' => $ticket->category,
             ]);
+
+            // Log activity
+            ActivityService::logSupportTicketCreated($ticket);
 
             return response()->json([
                 'ticket' => $ticket->load('messages'),

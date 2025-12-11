@@ -24,6 +24,7 @@ class Permission extends Model
     const MODULE_PROMO_CODES = 'promo_codes';
     const MODULE_REVIEWS = 'reviews';
     const MODULE_SUPPLIERS = 'suppliers';
+    const MODULE_TRANSACTIONS = 'transactions';
 
     protected $fillable = [
         'name',
@@ -85,6 +86,7 @@ class Permission extends Model
             self::MODULE_PROMO_CODES,
             self::MODULE_REVIEWS,
             self::MODULE_SUPPLIERS,
+            self::MODULE_TRANSACTIONS,
         ];
     }
 
@@ -172,6 +174,10 @@ class Permission extends Model
                 'suppliers.create' => 'Create Suppliers',
                 'suppliers.edit' => 'Edit Suppliers',
                 'suppliers.delete' => 'Delete Suppliers',
+            ],
+            self::MODULE_TRANSACTIONS => [
+                'transactions.view' => 'View Transactions',
+                'transactions.create' => 'Create Transactions',
             ],
         ];
     }

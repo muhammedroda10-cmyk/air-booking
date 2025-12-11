@@ -505,13 +505,21 @@ class DuffelSupplier extends AbstractFlightSupplier
     public function getOfferDetails(string $offerId): ?NormalizedFlightOffer
     {
         try {
+            // Strip the 'duffel_' prefix if present (offers are prefixed with supplier code)
+            $duffelOfferId = $offerId;
+            if (str_starts_with($offerId, 'duffel_')) {
+                $duffelOfferId = substr($offerId, 7); // Remove 'duffel_' prefix
+            }
+
             $response = $this->getHttpClient()
-                ->get($this->getBaseUrl() . '/air/offers/' . $offerId);
+                ->get($this->getBaseUrl() . '/air/offers/' . $duffelOfferId);
 
             if (!$response->successful()) {
                 $this->logError('Failed to get offer details', [
                     'offerId' => $offerId,
+                    'duffelOfferId' => $duffelOfferId,
                     'status' => $response->status(),
+                    'body' => $response->json(),
                 ]);
                 return null;
             }

@@ -20,8 +20,10 @@ import {
     Shield,
     UserCog,
     DollarSign,
+    Wallet,
     Menu,
     X,
+    Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -91,15 +93,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Bookings', href: '/dashboard/bookings', icon: Ticket, permission: 'bookings.view' },
         { name: 'Refunds', href: '/dashboard/refunds', icon: DollarSign, permission: 'refunds.view' },
+        { name: 'Transactions', href: '/dashboard/transactions', icon: Wallet, permission: 'transactions.view' },
         { name: 'Passengers', href: '/dashboard/passengers', icon: UserCog, permission: 'passengers.view' },
         { name: 'Support', href: '/dashboard/support', icon: Headphones, permission: 'support.view' },
         { name: 'Flights', href: '/dashboard/flights', icon: Plane, permission: 'flights.view' },
+        { name: 'Airlines', href: '/dashboard/airlines', icon: Plane, permission: 'airlines.view' },
+        { name: 'Airports', href: '/dashboard/airports', icon: MapPin, permission: 'airports.view' },
         { name: 'Hotels', href: '/dashboard/hotels', icon: Hotel, permission: 'hotels.view' },
         { name: 'Promo Codes', href: '/dashboard/promo-codes', icon: Tag, permission: 'promo_codes.view' },
         { name: 'Reviews', href: '/dashboard/reviews', icon: Star, permission: 'reviews.view' },
         { name: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.view' },
         { name: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.view' },
         { name: 'Suppliers', href: '/dashboard/suppliers', icon: ServerCog, permission: 'suppliers.view' },
+        { name: 'Activity Log', href: '/dashboard/activity', icon: Activity, permission: 'users.view' },
     ];
 
     // Filter navigation based on permissions
