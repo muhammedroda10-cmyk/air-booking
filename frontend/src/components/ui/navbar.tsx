@@ -107,7 +107,7 @@ export function Navbar() {
                                         </LocaleLink>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
-                                        <LocaleLink href="/account/trips" className="cursor-pointer">
+                                        <LocaleLink href="/account/bookings/flight" className="cursor-pointer">
                                             <Plane className="w-4 h-4 mr-2" />
                                             My Trips
                                         </LocaleLink>

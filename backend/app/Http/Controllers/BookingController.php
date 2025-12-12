@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewBookingCreated;
 use App\Models\Booking;
 use App\Models\Flight;
 use App\Models\Notification;
@@ -367,6 +368,9 @@ class BookingController extends Controller
 
                 // Log activity
                 ActivityService::logBookingCreated($booking);
+
+                // Broadcast new booking event for real-time updates
+                event(new NewBookingCreated($booking));
 
                 return response()->json([
                     'booking' => $booking,

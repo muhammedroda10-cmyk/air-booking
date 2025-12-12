@@ -149,11 +149,11 @@ export function NotificationBell() {
             case 'booking_cancelled':
             case 'payment':
             case 'payment_received':
-                if (data.booking_id) return `/account/bookings/${data.booking_id}`;
+                if (data.booking_id) return `/account/bookings/flight/${data.booking_id}`;
                 break;
             case 'refund':
             case 'refund_processed':
-                if (data.booking_id) return `/account/bookings/${data.booking_id}`;
+                if (data.booking_id) return `/account/bookings/flight/${data.booking_id}`;
                 break;
             case 'support_ticket':
                 if (data.ticket_id) return `/account/support/${data.ticket_id}`;
@@ -164,12 +164,13 @@ export function NotificationBell() {
                 if (data.alert_id) return `/account/price-alerts`;
                 break;
             case 'hotel_booking':
-                if (data.hotel_booking_id) return `/account/hotels/${data.hotel_booking_id}`;
+                if (data.hotel_booking_id) return `/account/bookings/hotel/${data.hotel_booking_id}`;
                 break;
         }
 
         return null;
     };
+
 
     // Handle notification click
     const handleNotificationClick = async (notification: Notification) => {

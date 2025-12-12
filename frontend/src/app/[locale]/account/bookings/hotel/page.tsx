@@ -23,6 +23,7 @@ import {
 
 interface HotelBooking {
     id: number;
+    uuid: string;
     check_in: string;
     check_out: string;
     guests?: number;
@@ -43,7 +44,7 @@ interface HotelBooking {
     };
 }
 
-export default function HotelBookingsPage() {
+export default function HotelsPage() {
     const [bookings, setBookings] = useState<HotelBooking[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -116,6 +117,9 @@ export default function HotelBookingsPage() {
                                         <div className="flex flex-col md:flex-row justify-between gap-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
+                                                    <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                                        {booking.uuid}
+                                                    </span>
                                                     <Badge className={getStatusBadge(booking.status)}>
                                                         {booking.status.toUpperCase()}
                                                     </Badge>
@@ -170,9 +174,11 @@ export default function HotelBookingsPage() {
                                                 </div>
 
                                                 {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-                                                    <Button variant="outline" size="sm">
-                                                        View Details
-                                                    </Button>
+                                                    <Link href={`/account/bookings/hotel/${booking.id}`}>
+                                                        <Button variant="outline" size="sm">
+                                                            View Details
+                                                        </Button>
+                                                    </Link>
                                                 )}
                                             </div>
                                         </div>

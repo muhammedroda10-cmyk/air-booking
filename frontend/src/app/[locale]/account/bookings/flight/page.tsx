@@ -23,6 +23,7 @@ import { LoadingSpinner } from "@/components/ui/loading";
 
 interface Booking {
     id: number;
+    uuid: string;
     pnr: string;
     status: string;
     created_at: string;
@@ -48,7 +49,7 @@ interface Booking {
     };
 }
 
-export default function TripsPage() {
+export default function FlightPage() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [cancelling, setCancelling] = useState<number | null>(null);
@@ -129,6 +130,9 @@ export default function TripsPage() {
                                     <div className="flex flex-col lg:flex-row justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-3">
+                                                <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                                    {booking.uuid}
+                                                </span>
                                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${booking.status === 'confirmed'
                                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                     : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
@@ -187,7 +191,7 @@ export default function TripsPage() {
                                         <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-2">
                                             <p className="text-lg font-bold">${booking.total_price}</p>
                                             <div className="flex gap-2">
-                                                <Link href={`/account/tickets/${booking.id}`}>
+                                                <Link href={`/account/bookings/flight/${booking.id}`}>
                                                     <Button variant="outline" size="sm">Ticket</Button>
                                                 </Link>
                                                 <AlertDialog>

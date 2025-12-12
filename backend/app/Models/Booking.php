@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Str;
 
 class Booking extends Model
 {
@@ -23,6 +24,7 @@ class Booking extends Model
     public const ERROR_UNKNOWN = 'UNKNOWN_ERROR';
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'flight_id',
         'external_offer_id',
@@ -57,6 +59,20 @@ class Booking extends Model
         'refunded_at' => 'datetime',
         'external_booking_data' => 'array',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($booking) {
+            if (empty($booking->uuid)) {
+                // Generate sequential booking number
+                $lastBooking = static::orderBy('id', 'desc')->first();
+                $nextNumber = $lastBooking ? $lastBooking->id + 1 : 1;
+                $booking->uuid = 'BK-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {

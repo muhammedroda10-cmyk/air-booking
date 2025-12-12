@@ -49,4 +49,57 @@ class HotelBookingController extends Controller
 
         return response()->json($booking, 201);
     }
+
+    /**
+     * Admin: List all hotel bookings
+     */
+    public function adminIndex(Request $request)
+    {
+        $query = HotelBooking::with(['user', 'hotel', 'room']);
+
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        return response()->json([
+            'bookings' => $bookings->items(),
+            'pagination' => [
+                'total' => $bookings->total(),
+                'per_page' => $bookings->perPage(),
+                'current_page' => $bookings->currentPage(),
+                'last_page' => $bookings->lastPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Admin: Show a specific hotel booking
+     */
+    public function adminShow(HotelBooking $hotelBooking)
+    {
+        return response()->json([
+            'booking' => $hotelBooking->load(['user', 'hotel', 'room']),
+        ]);
+    }
+
+    /**
+     * Admin: Update a hotel booking
+     */
+    public function update(Request $request, HotelBooking $hotelBooking)
+    {
+        $validated = $request->validate([
+            'status' => 'sometimes|in:pending,confirmed,cancelled,completed',
+            'check_in' => 'sometimes|date',
+            'check_out' => 'sometimes|date|after:check_in',
+        ]);
+
+        $hotelBooking->update($validated);
+
+        return response()->json([
+            'message' => 'Booking updated successfully',
+            'booking' => $hotelBooking->fresh(['user', 'hotel', 'room']),
+        ]);
+    }
 }

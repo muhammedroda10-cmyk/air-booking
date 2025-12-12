@@ -346,7 +346,7 @@ function BookingContent() {
                                                     <Button onClick={handleDownloadTicket}>
                                                         {t.booking.download_ticket}
                                                     </Button>
-                                                    <Button variant="outline" onClick={() => router.push('/account/trips')}>
+                                                    <Button variant="outline" onClick={() => router.push('/account/bookings/flight')}>
                                                         {dir === 'rtl' ? 'عرض رحلاتي' : 'View My Trips'}
                                                     </Button>
                                                 </div>

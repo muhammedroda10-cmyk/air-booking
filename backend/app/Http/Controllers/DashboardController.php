@@ -67,4 +67,62 @@ class DashboardController extends Controller
                 ->get(),
         ]);
     }
+
+    /**
+     * Get financial reports and analytics
+     */
+    public function reports(Request $request)
+    {
+        $period = (int) $request->get('period', 30);
+        $startDate = Carbon::now()->subDays($period);
+        $previousStartDate = Carbon::now()->subDays($period * 2);
+        $previousEndDate = Carbon::now()->subDays($period);
+
+        // Current period stats
+        $totalRevenue = Booking::where('payment_status', 'paid')
+            ->where('created_at', '>=', $startDate)
+            ->sum('total_price');
+
+        $totalBookings = Booking::where('created_at', '>=', $startDate)->count();
+
+        $flightBookings = Booking::where('created_at', '>=', $startDate)->count();
+
+        $hotelBookings = 0;
+        if (class_exists(\App\Models\HotelBooking::class)) {
+            $hotelBookings = \App\Models\HotelBooking::where('created_at', '>=', $startDate)->count();
+        }
+
+        $totalRefunds = Booking::where('payment_status', 'refunded')
+            ->where('created_at', '>=', $startDate)
+            ->sum('total_price');
+
+        // Previous period stats for growth calculation
+        $previousRevenue = Booking::where('payment_status', 'paid')
+            ->whereBetween('created_at', [$previousStartDate, $previousEndDate])
+            ->sum('total_price');
+
+        $previousBookings = Booking::whereBetween('created_at', [$previousStartDate, $previousEndDate])->count();
+
+        // Calculate growth percentages
+        $revenueGrowth = $previousRevenue > 0 
+            ? round((($totalRevenue - $previousRevenue) / $previousRevenue) * 100, 1) 
+            : 0;
+
+        $bookingGrowth = $previousBookings > 0 
+            ? round((($totalBookings - $previousBookings) / $previousBookings) * 100, 1) 
+            : 0;
+
+        $averageBookingValue = $totalBookings > 0 ? round($totalRevenue / $totalBookings, 2) : 0;
+
+        return response()->json([
+            'totalRevenue' => round($totalRevenue, 2),
+            'totalBookings' => $totalBookings,
+            'flightBookings' => $flightBookings,
+            'hotelBookings' => $hotelBookings,
+            'totalRefunds' => round($totalRefunds, 2),
+            'averageBookingValue' => $averageBookingValue,
+            'revenueGrowth' => $revenueGrowth,
+            'bookingGrowth' => $bookingGrowth,
+        ]);
+    }
 }

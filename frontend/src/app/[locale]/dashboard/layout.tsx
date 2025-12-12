@@ -24,6 +24,9 @@ import {
     Menu,
     X,
     Activity,
+    BarChart3,
+    Bell,
+    Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -88,28 +91,69 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    // Navigation items with permission requirements
-    const navItems: NavItem[] = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Bookings', href: '/dashboard/bookings', icon: Ticket, permission: 'bookings.view' },
-        { name: 'Refunds', href: '/dashboard/refunds', icon: DollarSign, permission: 'refunds.view' },
-        { name: 'Transactions', href: '/dashboard/transactions', icon: Wallet, permission: 'transactions.view' },
-        { name: 'Passengers', href: '/dashboard/passengers', icon: UserCog, permission: 'passengers.view' },
-        { name: 'Support', href: '/dashboard/support', icon: Headphones, permission: 'support.view' },
-        { name: 'Flights', href: '/dashboard/flights', icon: Plane, permission: 'flights.view' },
-        { name: 'Airlines', href: '/dashboard/airlines', icon: Plane, permission: 'airlines.view' },
-        { name: 'Airports', href: '/dashboard/airports', icon: MapPin, permission: 'airports.view' },
-        { name: 'Hotels', href: '/dashboard/hotels', icon: Hotel, permission: 'hotels.view' },
-        { name: 'Promo Codes', href: '/dashboard/promo-codes', icon: Tag, permission: 'promo_codes.view' },
-        { name: 'Reviews', href: '/dashboard/reviews', icon: Star, permission: 'reviews.view' },
-        { name: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.view' },
-        { name: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.view' },
-        { name: 'Suppliers', href: '/dashboard/suppliers', icon: ServerCog, permission: 'suppliers.view' },
-        { name: 'Activity Log', href: '/dashboard/activity', icon: Activity, permission: 'users.view' },
+    // Navigation sections with permission requirements
+    const navSections = [
+        {
+            title: null, // No header for overview
+            items: [
+                { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                { name: 'Live Bookings', href: '/dashboard/live', icon: Activity, permission: 'bookings.view' },
+            ]
+        },
+        {
+            title: 'Sales & Bookings',
+            items: [
+                { name: 'Flight Bookings', href: '/dashboard/bookings', icon: Ticket, permission: 'bookings.view' },
+                { name: 'Hotel Bookings', href: '/dashboard/hotel-bookings', icon: Hotel, permission: 'bookings.view' },
+                { name: 'Passengers', href: '/dashboard/passengers', icon: UserCog, permission: 'passengers.view' },
+            ]
+        },
+        {
+            title: 'Accounting',
+            items: [
+                { name: 'Transactions', href: '/dashboard/transactions', icon: Wallet, permission: 'transactions.view' },
+                { name: 'Refunds', href: '/dashboard/refunds', icon: DollarSign, permission: 'refunds.view' },
+                { name: 'Reports', href: '/dashboard/reports', icon: BarChart3, permission: 'transactions.view' },
+            ]
+        },
+        {
+            title: 'Catalog',
+            items: [
+                { name: 'Flights', href: '/dashboard/flights', icon: Plane, permission: 'flights.view' },
+                { name: 'Airlines', href: '/dashboard/airlines', icon: Plane, permission: 'airlines.view' },
+                { name: 'Airports', href: '/dashboard/airports', icon: MapPin, permission: 'airports.view' },
+                { name: 'Hotels', href: '/dashboard/hotels', icon: Building2, permission: 'hotels.view' },
+            ]
+        },
+        {
+            title: 'Marketing',
+            items: [
+                { name: 'Promo Codes', href: '/dashboard/promo-codes', icon: Tag, permission: 'promo_codes.view' },
+                { name: 'Reviews', href: '/dashboard/reviews', icon: Star, permission: 'reviews.view' },
+            ]
+        },
+        {
+            title: 'Support',
+            items: [
+                { name: 'Support Tickets', href: '/dashboard/support', icon: Headphones, permission: 'support.view' },
+                { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, permission: 'users.view' },
+            ]
+        },
+        {
+            title: 'Administration',
+            items: [
+                { name: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.view' },
+                { name: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.view' },
+                { name: 'Suppliers', href: '/dashboard/suppliers', icon: ServerCog, permission: 'suppliers.view' },
+                { name: 'Activity Log', href: '/dashboard/activity', icon: Activity, permission: 'users.view' },
+                { name: 'Settings', href: '/dashboard/settings', icon: Settings, permission: 'users.view' },
+            ]
+        },
     ];
 
-    // Filter navigation based on permissions
-    const visibleNavItems = navItems.filter(item => hasPermission(item.permission));
+
+    // Filter sections based on permissions
+    const getVisibleItems = (items: NavItem[]) => items.filter(item => hasPermission(item.permission));
 
     const getRoleBadge = () => {
         if (user.role === 'admin') return 'Super Admin';
@@ -129,7 +173,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Sidebar */}
             <aside className={cn(
-                "w-64 bg-white dark:bg-slate-950 border-r flex-col fixed md:relative h-screen z-40 transition-transform",
+                "w-64 bg-white dark:bg-slate-950 border-r flex-col fixed h-screen z-40 transition-transform overflow-y-auto",
                 mobileMenuOpen ? "flex" : "hidden md:flex"
             )}>
                 <div className="p-6">
@@ -142,25 +186,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-                    {visibleNavItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = pathname === item.href ||
-                            (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                    {navSections.map((section, sectionIndex) => {
+                        const visibleItems = getVisibleItems(section.items);
+                        if (visibleItems.length === 0) return null;
+
                         return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                    isActive
-                                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                            <div key={sectionIndex} className={sectionIndex > 0 ? "pt-4" : ""}>
+                                {section.title && (
+                                    <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        {section.title}
+                                    </div>
                                 )}
-                            >
-                                <Icon className="w-5 h-5" />
-                                {item.name}
-                            </Link>
+                                {visibleItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive = pathname === item.href ||
+                                        (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                                    return (
+                                        <Link
+                                            key={item.name}
+                                            href={item.href}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                                                isActive
+                                                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                                                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                                            )}
+                                        >
+                                            <Icon className="w-4 h-4" />
+                                            {item.name}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
                         );
                     })}
                 </nav>
@@ -187,7 +245,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto md:ml-64">
                 <div className="p-4 md:p-8">
                     {children}
                 </div>

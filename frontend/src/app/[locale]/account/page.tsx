@@ -205,7 +205,7 @@ export default function AccountPage() {
                                                 </p>
                                                 {/* Quick Actions */}
                                                 <div className="flex gap-2 mt-2">
-                                                    <Link href={`/account/tickets/${nextTrip.id}`}>
+                                                    <Link href={`/account/bookings/flight/${nextTrip.id}`}>
                                                         <Button variant="secondary" size="sm">View Ticket</Button>
                                                     </Link>
                                                     <Button
@@ -266,7 +266,7 @@ export default function AccountPage() {
                             <div className="divide-y">
                                 {bookings.slice(0, 4).length > 0 ? (
                                     bookings.slice(0, 4).map((booking) => (
-                                        <Link key={booking.id} href={`/account/tickets/${booking.id}`}>
+                                        <Link key={booking.id} href={`/account/bookings/flight/${booking.id}`}>
                                             <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">

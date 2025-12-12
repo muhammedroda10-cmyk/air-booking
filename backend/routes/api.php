@@ -141,6 +141,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/admin/bookings/{booking}/cancel', [\App\Http\Controllers\AdminBookingController::class, 'cancel']);
         Route::get('/admin/stats', [\App\Http\Controllers\DashboardController::class, 'stats']);
 
+        // Live Bookings
+        Route::get('/admin/live-bookings', [\App\Http\Controllers\AdminBookingController::class, 'liveIndex']);
+        Route::post('/admin/bookings/{booking}/revalidate', [\App\Http\Controllers\AdminBookingController::class, 'revalidate']);
+
         // User management
         Route::get('/admin/users', [\App\Http\Controllers\AdminUserController::class, 'index']);
         Route::get('/admin/users/{user}', [\App\Http\Controllers\AdminUserController::class, 'show']);
@@ -181,6 +185,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/admin/activity', [\App\Http\Controllers\ActivityLogController::class, 'adminIndex']);
         Route::get('/admin/activity/statistics', [\App\Http\Controllers\ActivityLogController::class, 'statistics']);
         Route::get('/admin/activity/types', [\App\Http\Controllers\ActivityLogController::class, 'actionTypes']);
+
+        // Hotel Bookings management
+        Route::get('/admin/hotel-bookings', [\App\Http\Controllers\HotelBookingController::class, 'adminIndex']);
+        Route::get('/admin/hotel-bookings/{hotelBooking}', [\App\Http\Controllers\HotelBookingController::class, 'adminShow']);
+        Route::put('/admin/hotel-bookings/{hotelBooking}', [\App\Http\Controllers\HotelBookingController::class, 'update']);
+
+        // Reports
+        Route::get('/admin/reports', [\App\Http\Controllers\DashboardController::class, 'reports']);
+
+        // Admin Notifications management
+        Route::get('/admin/notifications', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'index']);
+        Route::post('/admin/notifications', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'send']);
+
+        // System Settings
+        Route::get('/admin/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index']);
+        Route::post('/admin/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update']);
     });
 
     // ============================================

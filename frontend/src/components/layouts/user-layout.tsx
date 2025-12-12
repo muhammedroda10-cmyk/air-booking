@@ -13,8 +13,8 @@ interface UserLayoutProps {
 
 const navItems = [
     { href: "/account", label: "Overview", icon: LayoutDashboard },
-    { href: "/account/trips", label: "My Trips", icon: Plane },
-    { href: "/account/hotel-bookings", label: "Hotels", icon: Building2 },
+    { href: "/account/bookings/flight", label: "My Trips", icon: Plane },
+    { href: "/account/bookings/hotel", label: "Hotels", icon: Building2 },
     { href: "/account/history", label: "History", icon: History },
     { href: "/account/wallet", label: "Wallet", icon: Wallet },
     { href: "/account/support", label: "Support", icon: Headphones },

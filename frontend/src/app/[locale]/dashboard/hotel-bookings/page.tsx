@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import api from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,57 +15,47 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {
-    Ticket,
+    Building2,
     Search,
     Loader2,
-    Plane,
     Calendar,
     Eye,
     RefreshCw,
     AlertCircle,
     DollarSign,
-    X,
+    MapPin,
 } from 'lucide-react';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
-interface Booking {
+interface HotelBooking {
     id: number;
     uuid: string;
-    pnr: string;
     status: string;
-    payment_status: string;
     total_price: number;
-    refund_amount?: number;
+    check_in: string;
+    check_out: string;
     created_at: string;
     user: {
         id: number;
         name: string;
         email: string;
     };
-    flight?: {
-        flight_number: string;
-        airline?: { name: string };
+    hotel: {
+        id: number;
+        name: string;
+        city: string;
+    };
+    room?: {
+        type: string;
     };
 }
 
-export default function BookingsPage() {
+export default function HotelBookingsPage() {
     const { toast } = useToast();
-    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [bookings, setBookings] = useState<HotelBooking[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
-    const [cancelling, setCancelling] = useState(false);
 
     useEffect(() => {
         fetchBookings();
@@ -80,34 +69,15 @@ export default function BookingsPage() {
             if (statusFilter !== 'all') {
                 params.append('status', statusFilter);
             }
-            const { data } = await api.get(`/admin/bookings?${params.toString()}`);
+            const { data } = await api.get(`/admin/hotel-bookings?${params.toString()}`);
             const bookingList = data.bookings || data.data || data || [];
             setBookings(Array.isArray(bookingList) ? bookingList : []);
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to load bookings';
+            const message = err.response?.data?.message || 'Failed to load hotel bookings';
             setError(message);
             toast({ title: 'Error', description: message, variant: 'destructive' });
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleCancel = async () => {
-        if (!cancelTarget) return;
-        try {
-            setCancelling(true);
-            await api.post(`/admin/bookings/${cancelTarget.id}/cancel`, { reason: 'Cancelled by admin' });
-            toast({ title: 'Success', description: 'Booking cancelled successfully' });
-            setCancelTarget(null);
-            fetchBookings();
-        } catch (err: any) {
-            toast({
-                title: 'Error',
-                description: err.response?.data?.message || 'Failed to cancel booking',
-                variant: 'destructive',
-            });
-        } finally {
-            setCancelling(false);
         }
     };
 
@@ -116,20 +86,15 @@ export default function BookingsPage() {
             confirmed: 'bg-green-100 text-green-700',
             pending: 'bg-yellow-100 text-yellow-700',
             cancelled: 'bg-red-100 text-red-700',
-            failed: 'bg-red-100 text-red-700',
             completed: 'bg-blue-100 text-blue-700',
         };
         return <Badge className={styles[status] || 'bg-gray-100 text-gray-700'}>{status || 'Unknown'}</Badge>;
     };
 
-    const getPaymentBadge = (status: string) => {
-        const styles: Record<string, string> = {
-            paid: 'bg-green-100 text-green-700',
-            pending: 'bg-yellow-100 text-yellow-700',
-            refunded: 'bg-purple-100 text-purple-700',
-            partial_refund: 'bg-orange-100 text-orange-700',
-        };
-        return <Badge variant="outline" className={styles[status] || 'bg-gray-100'}>{status || 'Unknown'}</Badge>;
+    const calculateNights = (checkIn: string, checkOut: string) => {
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+        return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     };
 
     const filteredBookings = bookings.filter(booking => {
@@ -137,7 +102,7 @@ export default function BookingsPage() {
         const query = searchQuery.toLowerCase();
         return (
             booking.uuid?.toLowerCase().includes(query) ||
-            booking.pnr?.toLowerCase().includes(query) ||
+            booking.hotel?.name?.toLowerCase().includes(query) ||
             booking.user?.name?.toLowerCase().includes(query) ||
             booking.user?.email?.toLowerCase().includes(query)
         );
@@ -147,7 +112,7 @@ export default function BookingsPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading bookings...</p>
+                <p className="text-muted-foreground">Loading hotel bookings...</p>
             </div>
         );
     }
@@ -156,7 +121,7 @@ export default function BookingsPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <AlertCircle className="w-12 h-12 text-red-500" />
-                <h2 className="text-lg font-semibold">Failed to load bookings</h2>
+                <h2 className="text-lg font-semibold">Failed to load hotel bookings</h2>
                 <p className="text-muted-foreground">{error}</p>
                 <Button onClick={fetchBookings} variant="outline">
                     <RefreshCw className="w-4 h-4 mr-2" />
@@ -170,8 +135,8 @@ export default function BookingsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Bookings</h1>
-                    <p className="text-muted-foreground">View and manage all bookings ({bookings.length} total)</p>
+                    <h1 className="text-2xl font-bold">Hotel Bookings</h1>
+                    <p className="text-muted-foreground">Manage all hotel reservations ({bookings.length} total)</p>
                 </div>
                 <Button variant="outline" size="icon" onClick={fetchBookings} title="Refresh">
                     <RefreshCw className="w-4 h-4" />
@@ -182,7 +147,7 @@ export default function BookingsPage() {
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search by UUID, PNR, name, or email..."
+                        placeholder="Search by ID, hotel, or guest..."
                         className="pl-10"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -206,8 +171,8 @@ export default function BookingsPage() {
                 {filteredBookings.length === 0 ? (
                     <Card>
                         <CardContent className="py-12 text-center">
-                            <Ticket className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">No Bookings Found</h3>
+                            <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">No Hotel Bookings Found</h3>
                             <p className="text-muted-foreground text-sm">Try adjusting your search or filters</p>
                         </CardContent>
                     </Card>
@@ -217,26 +182,30 @@ export default function BookingsPage() {
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <Plane className="w-5 h-5 text-blue-600" />
+                                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <Building2 className="w-5 h-5 text-purple-600" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                                                     {booking.uuid}
                                                 </span>
-                                                <span className="font-semibold">PNR: {booking.pnr}</span>
                                                 {getStatusBadge(booking.status)}
-                                                {getPaymentBadge(booking.payment_status)}
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                {booking.user?.name || 'Unknown'} • {booking.user?.email || 'No email'}
+                                            <div className="text-sm font-medium mt-1">
+                                                {booking.hotel?.name || 'Unknown Hotel'}
                                             </div>
-                                            {booking.flight && (
-                                                <div className="text-xs text-muted-foreground mt-1">
-                                                    Flight: {booking.flight.flight_number} ({booking.flight.airline?.name || 'Unknown'})
-                                                </div>
-                                            )}
+                                            <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                                <MapPin className="w-3 h-3" />
+                                                {booking.hotel?.city || 'Unknown'} • {booking.user?.name || 'Unknown'}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(booking.check_in).toLocaleDateString()} - {new Date(booking.check_out).toLocaleDateString()}
+                                                <span className="text-primary font-medium">
+                                                    ({calculateNights(booking.check_in, booking.check_out)} nights)
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -246,32 +215,13 @@ export default function BookingsPage() {
                                                 <DollarSign className="w-4 h-4" />
                                                 {Number(booking.total_price || 0).toFixed(2)}
                                             </div>
-                                            {booking.refund_amount && Number(booking.refund_amount) > 0 && (
-                                                <div className="text-xs text-green-600">-${Number(booking.refund_amount).toFixed(2)} refunded</div>
-                                            )}
-                                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(booking.created_at).toLocaleDateString()}
+                                            <div className="text-xs text-muted-foreground">
+                                                {booking.room?.type || 'Standard Room'}
                                             </div>
                                         </div>
-                                        <div className="flex gap-1">
-                                            <Link href={`/dashboard/bookings/${booking.id}`}>
-                                                <Button variant="outline" size="sm" title="View Details">
-                                                    <Eye className="w-4 h-4" />
-                                                </Button>
-                                            </Link>
-                                            {booking.status !== 'cancelled' && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="text-red-500 hover:text-red-600"
-                                                    onClick={() => setCancelTarget(booking)}
-                                                    title="Cancel Booking"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            )}
-                                        </div>
+                                        <Button variant="ghost" size="icon">
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 </div>
                             </CardContent>
@@ -279,24 +229,6 @@ export default function BookingsPage() {
                     ))
                 )}
             </div>
-
-            <AlertDialog open={!!cancelTarget} onOpenChange={(open) => !open && setCancelTarget(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Are you sure you want to cancel booking <strong>#{cancelTarget?.pnr}</strong>? This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={cancelling}>Keep Booking</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleCancel} disabled={cancelling} className="bg-red-500 hover:bg-red-600">
-                            {cancelling && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Cancel Booking
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }

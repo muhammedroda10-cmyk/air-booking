@@ -373,7 +373,7 @@ export default function PaymentPage() {
                                         <Button
                                             variant="outline"
                                             className="flex-1"
-                                            onClick={() => router.push(`/account/tickets/${booking.id}`)}
+                                            onClick={() => router.push(`/account/bookings/flight/${booking.id}`)}
                                         >
                                             View Ticket
                                         </Button>

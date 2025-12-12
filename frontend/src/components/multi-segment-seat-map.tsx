@@ -86,14 +86,14 @@ export const MultiSegmentSeatMap = React.forwardRef<MultiSegmentSeatMapRef, Mult
                                 <CardTitle className="text-xl flex items-center gap-2">
                                     {dir === 'rtl' ? 'اختر مقاعدك' : 'Select Your Seats'}
                                 </CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-1">
+                                <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                     <span className="font-semibold">{segment.originCode}</span>
                                     <ArrowRight className="w-3 h-3" />
                                     <span className="font-semibold">{segment.destinationCode}</span>
                                     {segment.flightNumber && (
                                         <Badge variant="outline" className="ml-2">{segment.flightNumber}</Badge>
                                     )}
-                                </CardDescription>
+                                </div>
                             </div>
                             <SegmentStatusBadge status={getSegmentStatus(segment.id)} selected={(selectedSeats[segment.id] || []).length} total={passengerCount} dir={dir} />
                         </div>

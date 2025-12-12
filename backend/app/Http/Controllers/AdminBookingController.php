@@ -162,4 +162,72 @@ class AdminBookingController extends Controller
             'booking' => $booking,
         ]);
     }
+
+    /**
+     * Get live bookings for today (real-time feed)
+     */
+    public function liveIndex(Request $request)
+    {
+        $today = now()->startOfDay();
+
+        $bookings = Booking::with(['user', 'flight.airline'])
+            ->whereDate('created_at', '>=', $today)
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
+
+        // Calculate stats
+        $stats = [
+            'total' => $bookings->count(),
+            'pending' => $bookings->where('status', 'pending')->count(),
+            'confirmed' => $bookings->where('status', 'confirmed')->count(),
+            'onHold' => $bookings->where('status', 'on_hold')->count(),
+            'todayRevenue' => $bookings->where('payment_status', 'paid')->sum('total_price'),
+        ];
+
+        return response()->json([
+            'bookings' => $bookings,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Revalidate an on-hold booking status
+     */
+    public function revalidate(Request $request, Booking $booking)
+    {
+        // Only on-hold bookings can be revalidated
+        if ($booking->status !== 'on_hold') {
+            return response()->json([
+                'message' => 'Only on-hold bookings can be revalidated',
+                'status' => $booking->status,
+            ], 422);
+        }
+
+        $oldStatus = $booking->status;
+
+        // Check with supplier if booking is issued
+        // This would typically call the external API to check the PNR status
+        // For now, we'll simulate by checking if payment is complete
+        if ($booking->payment_status === 'paid') {
+            // Mark as confirmed since payment is complete
+            $booking->update(['status' => 'confirmed']);
+        } else {
+            // Check elapsed time - if on hold for too long, might need attention
+            $hoursOnHold = now()->diffInHours($booking->updated_at);
+            if ($hoursOnHold > 24) {
+                // Add a note that this booking needs attention
+                $booking->update([
+                    'notes' => ($booking->notes ?? '') . "\n[Auto] On hold for {$hoursOnHold} hours - may need manual review",
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => $oldStatus !== $booking->status ? 'Booking status updated' : 'No status change',
+            'old_status' => $oldStatus,
+            'status' => $booking->fresh()->status,
+            'booking' => $booking->fresh(['user', 'flight']),
+        ]);
+    }
 }
